@@ -1,5 +1,9 @@
-Type
-
+Package.json keeps track of all your node modules. Type:
 > npm install
 
-to get all files for the project. It should automatically install from package-lock.json.
+To install a local copy of the node modules.
+
+Use:
+> npm run dev
+
+To set up nodemon so you don't have to turn off and on the server for on the backend.
