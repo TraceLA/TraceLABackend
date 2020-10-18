@@ -1,0 +1,26 @@
+{
+  "name": "TraceLA-Backend",
+  "version": "1.0.0",
+  "description": "> npm i",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TraceLA/TraceLABackend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TraceLA/TraceLABackend/issues"
+  },
+  "homepage": "https://github.com/TraceLA/TraceLABackend#readme"
+}
