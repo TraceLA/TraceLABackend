@@ -1,6 +1,17 @@
 const express = require('express');
 const app = express();
 const port = 5000;
+const db = require('./queries')
+const bodyParser = require('body-parser')
+
+
+app.use(bodyParser.json())
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+)
+
 
 // Users have either an ID or LogIn or Both, and a password
 // They can use either ID or LogIn to sign into TraceLA
@@ -53,6 +64,9 @@ locations = [
               "Starbucks101", "CookieJar13", "UCLA Dining Hall", "ASHE Student Medical Center"
             ]
 
+
+
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 });
@@ -60,3 +74,13 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 });
+
+
+app.get('/users', db.getUsers)
+app.get('/users/:studentid', db.getUserById)
+app.post('/users', db.createUser)
+app.delete('/users/:studentid', db.deleteUser)
+
+app.get('/coords', db.getCoords)
+app.get('/coords/:studentid', db.getCoordsById)
+app.post('/coords', db.createCoords)
