@@ -5,7 +5,7 @@ const port = 5000;
 // Users have either an ID or LogIn or Both, and a password
 // [First Name, Lastname, Student ID, LogIn, Password]
 users = [
-          ["Adam","Zegiler", "123456789" "Adam101", "password"],
+          ["Adam","Zegiler", "123456789", "Adam101", "password"],
           ["Bob", "Ymir", "123456798", "Bobbystriker1032", "PASSWORD"],
           ["Chelsie", "Xanas", "123456879", "ChickenChelsie", "PassCode"]
         ];
