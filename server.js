@@ -12,17 +12,6 @@ app.use(
   })
 )
 
-const query = `
-CREATE TABLE users (
-    First_Name varchar,
-    Last_Name varchar,
-    Username varchar,
-    Password varchar,
-    StudentID int
-);
-`;
-
-
 
 // Users have either an ID or LogIn or Both, and a password
 // They can use either ID or LogIn to sign into TraceLA
@@ -88,5 +77,10 @@ app.listen(port, () => {
 
 
 app.get('/users', db.getUsers)
-app.get('/users/:id', db.getUserById)
+app.get('/users/:studentid', db.getUserById)
 app.post('/users', db.createUser)
+app.delete('/users/:studentid', db.deleteUser)
+
+app.get('/coords', db.getCoords)
+app.get('/coords/:studentid', db.getCoordsById)
+app.post('/coords', db.createCoords)
