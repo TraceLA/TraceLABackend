@@ -7,6 +7,26 @@ const pool = new Pool({
   port: 5432,
 })
 
+
+const query = `
+CREATE TABLE users (
+    First_Name varchar,
+    Last_Name varchar,
+    Username varchar,
+    Password varchar,
+    StudentID int
+);
+`;
+
+pool.query(query, (err, res) => {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    console.log('Table is successfully created');
+});
+
+
 const getUsers = (request, response) => {
   pool.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
     if (error) {
