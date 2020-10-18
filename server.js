@@ -17,6 +17,11 @@ database = [
             ["Adam101", "10/12/2020", 0, 0, ["Starbucks101"], ["Bobbystriker1032", "ChickenChelsie"]],
           ];
 
+// List of known locations for reference
+locations = [
+              "Starbucks101", "CookieJar13", "UCLA Dining Hall", "ASHE Student Medical Center"
+            ]
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 });
