@@ -18,13 +18,13 @@ def main():
         last_name = random.choice(last_names)
         last_name = last_name[0] + last_name[1:].lower()
         password = string.ascii_letters + string.digits + '_!#$%^&*'
-        print('"user', _, '" : {', sep='')
-        print('  "First_Name" : "', first_name, '",', sep='')
-        print('  "First_Name" : "', last_name, '",', sep='')
-        print('  "StudentID" : "', ''.join([random.choice(string.digits) for _ in range(9)]), '",', sep='')
-        print('  "Username" : "', ''.join([first_name[_] for _ in range(min(int(random.choice(string.digits)), len(first_name)))]),  ''.join([last_name[_] for _ in range(min(int(random.choice(string.digits)), len(last_name)))]), ''.join([random.choice(string.digits) for _ in range((int(random.choice(string.digits)) + int(random.choice(string.digits))) // 2)]), '",', sep='')
-        print('  "Password" : "', ''.join([random.choice(password) for _ in range(8, 21)]), '"', sep='')
-        print('},')
+        print('  "user', _, '" : {', sep='')
+        print('    "First_Name" : "', first_name, '",', sep='')
+        print('    "First_Name" : "', last_name, '",', sep='')
+        print('    "StudentID" : "', ''.join([random.choice(string.digits) for _ in range(9)]), '",', sep='')
+        print('    "Username" : "', ''.join([first_name[_] for _ in range(min(int(random.choice(string.digits)), len(first_name)))]),  ''.join([last_name[_] for _ in range(min(int(random.choice(string.digits)), len(last_name)))]), ''.join([random.choice(string.digits) for _ in range((int(random.choice(string.digits)) + int(random.choice(string.digits))) // 2)]), '",', sep='')
+        print('    "Password" : "', ''.join([random.choice(password) for _ in range(8, 21)]), '"', sep='')
+        print('  },')
         
 
 if __name__=='__main__':
