@@ -4,7 +4,7 @@ const port = 5000;
 const db = require('./queries')
 const bodyParser = require('body-parser')
 
-const https = require("https");
+
 
 const dotenv = require('dotenv');
 dotenv.config();

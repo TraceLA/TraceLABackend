@@ -24,6 +24,7 @@ PGDATABASE=[SECRET_VALUE]
 PGUSER=[SECRET_VALUE]
 PGPORT=[SECRET_VALUE]
 PGPASSWORD=[SECRET_VALUE]
+MAPQUESTKEY=[SECRET_VALUE]
 ```
 
 # API Endpoints
@@ -58,6 +59,7 @@ app.post('/coords', db.createCoords)
         lat: float,
         long: float,
         studentid: Integer
+=> Calls MapQuest API to tag location street name
 
 app.get('/friends/:studentid', db.getFriendsByID);
 => Returns all friends (confirmed and non-confirmed) associated with student id
