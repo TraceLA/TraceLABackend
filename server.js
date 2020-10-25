@@ -4,6 +4,8 @@ const port = 5000;
 const db = require('./queries')
 const bodyParser = require('body-parser')
 
+const dotenv = require('dotenv');
+dotenv.config();
 
 app.use(bodyParser.json())
 app.use(
@@ -63,8 +65,6 @@ database = {
 locations = [
               "Starbucks101", "CookieJar13", "UCLA Dining Hall", "ASHE Student Medical Center"
             ]
-
-
 
 
 app.get('/', (req, res) => {

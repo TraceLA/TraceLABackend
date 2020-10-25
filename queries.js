@@ -1,12 +1,18 @@
-const Pool = require('pg').Pool
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'api',
-  password: 'postgres',
-  port: 5432,
-})
+const {Client} = require('pg')
 
+require('dotenv').config()
+
+const client = new Client({
+  host:process.env.PGHOST,
+  port:process.env.PGPORT,
+  user:process.env.PGUSER,
+  database:process.env.PGDATABASE,
+  password:process.env.PGPASSWORD,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+client.connect();
 
 const query = `
 CREATE TABLE users (
@@ -28,7 +34,7 @@ CREATE TABLE coords (
 `;
 
 
-pool.query(query, (err, res) => {
+client.query(query, (err, res) => {
     if (err) {
         console.error(err);
         return;
@@ -37,7 +43,7 @@ pool.query(query, (err, res) => {
 });
 
 
-pool.query(query2, (err, res) => {
+client.query(query2, (err, res) => {
     if (err) {
         console.error(err);
         return;
@@ -47,7 +53,7 @@ pool.query(query2, (err, res) => {
 
 
 const getUsers = (request, response) => {
-  pool.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
+  client.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
     if (error) {
       throw error
     }
@@ -58,7 +64,7 @@ const getUsers = (request, response) => {
 const getUserById = (request, response) => {
     const id = parseInt(request.params.studentid)
     console.log(id);
-    pool.query('SELECT * FROM users WHERE studentid = $1', [id], (error, results) => {
+    client.query('SELECT * FROM users WHERE studentid = $1', [id], (error, results) => {
       if (error) {
         throw error
       }
@@ -69,7 +75,7 @@ const getUserById = (request, response) => {
   const createUser = (request, response) => {
     const { first_name, last_name, username, password, studentid } = request.query;
     console.log(request.query);
-    pool.query('INSERT INTO users (first_name, last_name, username, password, studentid ) VALUES ($1, $2, $3, $4, $5)', [first_name, last_name, username, password, studentid ], (error, results) => {
+    client.query('INSERT INTO users (first_name, last_name, username, password, studentid ) VALUES ($1, $2, $3, $4, $5)', [first_name, last_name, username, password, studentid ], (error, results) => {
       if (error) {
         throw error
       }
@@ -80,7 +86,7 @@ const getUserById = (request, response) => {
   const deleteUser = (request, response) => {
     const id = parseInt(request.params.studentid)
   
-    pool.query('DELETE FROM users WHERE studentid = $1', [id], (error, results) => {
+    client.query('DELETE FROM users WHERE studentid = $1', [id], (error, results) => {
       if (error) {
         throw error
       }
@@ -90,7 +96,7 @@ const getUserById = (request, response) => {
 
 
   const getCoords = (request, response) => {
-    pool.query('SELECT * FROM coords ORDER BY studentid ASC', (error, results) => {
+    client.query('SELECT * FROM coords ORDER BY studentid ASC', (error, results) => {
       if (error) {
         throw error
       }
@@ -102,7 +108,7 @@ const getUserById = (request, response) => {
   const getCoordsById = (request, response) => {
     const id = parseInt(request.params.studentid)
     console.log(id);
-    pool.query('SELECT * FROM coords WHERE studentid = $1', [id], (error, results) => {
+    client.query('SELECT * FROM coords WHERE studentid = $1', [id], (error, results) => {
       if (error) {
         throw error
       }
@@ -113,7 +119,7 @@ const getUserById = (request, response) => {
   const createCoords = (request, response) => {
     const {  lat, long, studentid } = request.query;
     var stamp = new Date()
-    pool.query('INSERT INTO coords (lat, long, stamp, studentid ) VALUES ($1, $2, $3, $4)', [lat, long, stamp, studentid], (error, results) => {
+    client.query('INSERT INTO coords (lat, long, stamp, studentid ) VALUES ($1, $2, $3, $4)', [lat, long, stamp, studentid], (error, results) => {
         if (error) {
           throw error
         }
