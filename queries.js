@@ -1,6 +1,6 @@
 const {Client} = require('pg')
 const sq = require('./seedQuery')
-
+var requestLib = require('request');
 require('dotenv').config()
 
 const client = new Client({
@@ -114,13 +114,23 @@ const createCoords = (request, response) => {
     response.status(400).send("Missing params");
     return;
   }
-  client.query('INSERT INTO coords (lat, long, stamp, studentid ) VALUES ($1, $2, $3, $4)', [lat, long, stamp, studentid], (error, results) => {
+
+  var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
+  requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err, response2, body) {
+    if(err) { console.log(err); return; }
+    var b = JSON.parse(response2['body']);
+    var tag = b['results'][0]['locations'][0]['street'];
+
+    client.query('INSERT INTO coords (lat, long, stamp, studentid,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, studentid,tag], (error, results) => {
       if (error) {
         response.status(400).send("Error inserting coordinates");
         return;
       }
       response.status(201).send(`Coord added`)
     });
+  });
+
+  
 }
 
 /*

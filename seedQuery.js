@@ -17,7 +17,8 @@ const seedQuery =
         lat float8          NOT NULL,
         long float8         NOT NULL,
         stamp TIMESTAMPTZ,
-        studentid int       NOT NULL
+        studentid int       NOT NULL,
+        tag varchar
     );
 
     CREATE TABLE friends (
