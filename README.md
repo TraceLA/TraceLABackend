@@ -7,4 +7,3 @@ Use:
 > npm run dev
 
 To set up nodemon so you don't have to turn off and on the server for on the backend.
-
