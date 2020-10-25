@@ -8,8 +8,3 @@ Use:
 
 To set up nodemon so you don't have to turn off and on the server for on the backend.
 
-Postgres Setup:
-1. Download PostgreSQL here: https://www.postgresql.org/download/
-2. Set up the user "postgres" with password "postgres"
-3. Create a database called "api"
-
