@@ -155,6 +155,23 @@ const friendRequest = (request, response) => {
   })
 }
 
+const confirmRequest = (request, response) => {
+  const { user_a, user_b } = request.query;
+  const vals = [user_a, user_b];
+  if (vals.includes(undefined)) {
+    response.status(400).send("Missing params");
+    return;
+  }
+
+  client.query('UPDATE FRIENDS SET status = 1 WHERE user_a=$1 AND user_b=$2', vals, (error, results) => {
+    if (error) {
+      response.status(400).send("Error confirming friend request");
+      return;
+    }
+    response.status(200).send(`Friend request confirmed`);
+  })
+}
+
 module.exports = {
   getUsers,
   getUserById,
@@ -165,4 +182,5 @@ module.exports = {
   createCoords,
   getFriendsByID,
   friendRequest,
+  confirmRequest,
 }
