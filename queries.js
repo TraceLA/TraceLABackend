@@ -30,19 +30,35 @@ client.query(sq.seedQuery, (err, res) => {
  */
 
 const getUsers = (request, response) => {
-  client.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
-    if (error) {
-      response.status(400).send("Error retrieving users.");
+
+    // Get user by name
+    const { first_name, last_name} = request.query;
+    const vals = [first_name, last_name];
+    if (vals.includes(undefined)) {
+      client.query('SELECT first_name,last_name,email FROM users ORDER BY studentid ASC', (error, results) => {
+        if (error) {
+          response.status(400).send("Error retrieving users.");
+          return;
+        }
+        response.status(200).json(results.rows)
+      })
       return;
     }
-    response.status(200).json(results.rows)
-  })
+    
+    // Get all users
+    client.query('SELECT first_name,last_name,email FROM users WHERE first_name=$1 AND last_name=$2', vals, (error, results) => {
+      if (error) {
+        response.status(400).send("Error adding user");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
 }
 
 const getUserById = (request, response) => {
     const id = parseInt(request.params.studentid)
     console.log(id);
-    client.query('SELECT * FROM users WHERE studentid = $1', [id], (error, results) => {
+    client.query('SELECT first_name,last_name,email FROM users WHERE studentid = $1', [id], (error, results) => {
       if (error) {
         response.status(400).send("Error selecting user by id");
         return;
