@@ -153,11 +153,11 @@ const createCoords = (request, response) => {
  * Friend Table Queries
  */
 
-const getFriendsByID = (request, response) => {
-  const id = parseInt(request.params.studentid)
-  client.query('SELECT * FROM friends WHERE user_a = $1', [id], (error, results) => {
+const getFriendsByEmail = (request, response) => {
+  const {email} = request.query;
+  client.query('SELECT * FROM friends WHERE user_a_email = $1', [email], (error, results) => {
     if (error) {
-      response.status(400).send("Error finding friends by id");
+      response.status(400).send("Error finding friends by email");
       return;
     }
     response.status(200).json(results.rows)
@@ -165,31 +165,30 @@ const getFriendsByID = (request, response) => {
 }
 
 const friendRequest = (request, response) => {
-  const { user_a, user_b } = request.query;
-  const vals = [user_a, user_b, 0];
+  const { user_a_email, user_b_email } = request.query;
+  const vals = [user_a_email, user_b_email, 0];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
   }
 
-  client.query('INSERT INTO friends (user_a,user_b,status)  VALUES ($1, $2, $3)', vals, (error, results) => {
+  client.query('INSERT INTO friends (user_a_email,user_b_email,status)  VALUES ($1, $2, $3)', vals, (error, results) => {
     if (error) {
-      response.status(400).send("Error adding user");
+      response.status(400).send("Error making friend request");
       return;
     }
-    response.status(200).send(`User added`);
+    response.status(200).send(`Friend request made`);
   })
 }
 
 const confirmRequest = (request, response) => {
-  const { user_a, user_b } = request.query;
-  const vals = [user_a, user_b];
+  const { user_a_email, user_b_email } = request.query;
+  const vals = [user_a_email, user_b_email];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
   }
-
-  client.query('UPDATE FRIENDS SET status = 1 WHERE user_a=$1 AND user_b=$2', vals, (error, results) => {
+  client.query('UPDATE FRIENDS SET status = 1 WHERE user_a_email=$1 AND user_b_email=$2', vals, (error, results) => {
     if (error) {
       response.status(400).send("Error confirming friend request");
       return;
@@ -206,7 +205,7 @@ module.exports = {
   getCoords,
   getCoordsById,
   createCoords,
-  getFriendsByID,
+  getFriendsByEmail,
   friendRequest,
   confirmRequest,
 }

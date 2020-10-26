@@ -61,17 +61,18 @@ app.post('/coords', db.createCoords)
         studentid: Integer
 => Calls MapQuest API to tag location street name
 
-app.get('/friends/:studentid', db.getFriendsByID);
-=> Returns all friends (confirmed and non-confirmed) associated with student id
+app.get('/friends/', db.getFriendsByID);
+=> Returns all friends (confirmed and non-confirmed) with given email. Query params:
+    email: String
 
 app.post('/friendRequest', db.friendRequest);
 => Creates friend request with following query params:
-    user_a: Integer,
-    user_b: Integer
+    user_a_email: String,
+    user_b_email: String
 
 app.post('/friendRequest/confirm', db.confirmRequest);
 => Confirm friend request with following query params:
-    user_a: Integer,
-    user_b: Integer
+    user_a_email: String,
+    user_b_email: String
 
 ```

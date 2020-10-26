@@ -52,6 +52,6 @@ app.get('/coords', db.getCoords)
 app.get('/coords/:studentid', db.getCoordsById)
 app.post('/coords', db.createCoords)
 
-app.get('/friends/:studentid', db.getFriendsByID);
+app.get('/friends/', db.getFriendsByEmail);
 app.post('/friendRequest', db.friendRequest);
 app.post('/friendRequest/confirm', db.confirmRequest);

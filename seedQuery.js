@@ -9,8 +9,8 @@ const seedQuery =
         Last_Name     varchar     NOT NULL,
         Username      varchar     NOT NULL,
         Password      varchar     NOT NULL,
-        Email         varchar     NOT NULL,
-        StudentID     integer         NOT NULL    PRIMARY KEY
+        Email         varchar     NOT NULL      PRIMARY KEY,
+        StudentID     integer     NOT NULL      UNIQUE
     );
 
     CREATE TABLE coords (
@@ -23,8 +23,8 @@ const seedQuery =
 
     CREATE TABLE friends (
         friends_id serial PRIMARY KEY,
-        user_a integer NOT NULL REFERENCES users,
-        user_b integer NOT NULL REFERENCES users,
+        user_a_email varchar NOT NULL REFERENCES users,
+        user_b_email varchar NOT NULL REFERENCES users,
         status integer NOT NULL default 0
     );
 
@@ -32,8 +32,6 @@ const seedQuery =
             VALUES ('Carey','Nachenberg','caring', 'nachobird', 'cnachoberg@ucla.edu', 987654321);
     INSERT INTO users (first_name, last_name, username, password, email, studentid ) 
             VALUES ('David','Smallberg','small', 'berggg', 'smallberg@ucla.edu', 123456789);
-    INSERT INTO friends (user_a,user_b,status) 
-            VALUES (987654321,123456789,0);
 `;
 
 module.exports = {
