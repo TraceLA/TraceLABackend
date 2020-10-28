@@ -1,4 +1,11 @@
 # Getting Started
+
+> git clone https://github.com/TraceLA/TraceLABackend.git
+> cd TraceLABackend
+
+> touch .env
+Copy-paste all the secret keys from Discord
+
 Package.json keeps track of all your node modules. Type:
 > npm install
 
@@ -11,16 +18,7 @@ Type:
 To set up nodemon so you don't have to turn off and on the server for on the backend.
 
 
-# Instructions
 
-```
-git clone https://github.com/TraceLA/TraceLABackend.git
-cd TraceLABackend
-
-touch .env
-# copy-paste all the secret keys from Discord
-
-```
 
 # Environment Variables
 
