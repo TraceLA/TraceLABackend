@@ -48,12 +48,12 @@ app.get('/users/:studentid', db.getUserById)
 
 app.post('/users', db.createUser)
 => Create a new user with following query params:
-        First_Name: String,
-        Last_Name: String,
-        Username: String,
-        Password: String,
-        Email: String,
-        StudentID: Integer
+        first_name: String,
+        last_name: String,
+        username: String,
+        password: String,
+        email: String,
+        studentid: Integer
 
 app.delete('/users/:studentid', db.deleteUser)
 => Deletes user with given student id
