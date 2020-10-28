@@ -10,6 +10,18 @@ Type:
 
 To set up nodemon so you don't have to turn off and on the server for on the backend.
 
+
+# Instructions
+
+```
+git clone https://github.com/TraceLA/TraceLABackend.git
+cd TraceLABackend
+
+touch .env
+# copy-paste all the secret keys from Discord
+
+```
+
 # Environment Variables
 
 Simply
