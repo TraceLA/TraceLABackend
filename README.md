@@ -12,8 +12,6 @@ To set up nodemon so you don't have to turn off and on the server for on the bac
 
 # Environment Variables
 
-Collaborators have access to the environment variables under Settings/Secrets. 
-
 Simply
 > touch .env
 
