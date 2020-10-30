@@ -7,9 +7,9 @@ const seedQuery =
     CREATE TABLE users (
         First_Name    varchar     NOT NULL,
         Last_Name     varchar     NOT NULL,
-        Username      varchar     NOT NULL,
+        Username      varchar     NOT NULL      PRIMARY KEY,
         Password      varchar     NOT NULL,
-        Email         varchar     NOT NULL      PRIMARY KEY,
+        Email         varchar     NOT NULL      UNIQUE,
         StudentID     integer     NOT NULL      UNIQUE
     );
 
@@ -17,14 +17,14 @@ const seedQuery =
         lat float8          NOT NULL,
         long float8         NOT NULL,
         stamp TIMESTAMPTZ,
-        studentid int       NOT NULL,
+        username varchar      NOT NULL REFERENCES users,
         tag varchar
     );
 
     CREATE TABLE friends (
         friends_id serial PRIMARY KEY,
-        user_a_email varchar NOT NULL REFERENCES users,
-        user_b_email varchar NOT NULL REFERENCES users,
+        username_a varchar NOT NULL REFERENCES users,
+        username_b varchar NOT NULL REFERENCES users,
         status integer NOT NULL default 0
     );
 

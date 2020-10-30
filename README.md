@@ -4,6 +4,7 @@
 > cd TraceLABackend
 
 > touch .env
+
 Copy-paste all the secret keys from Discord
 
 Package.json keeps track of all your node modules. Type:
@@ -18,7 +19,9 @@ Type:
 To set up nodemon so you don't have to turn off and on the server for on the backend.
 
 
+# Accessing the Database
 
+> psql -U username -h nameOfRemoteServer -p 5432 dbname
 
 # Environment Variables
 
