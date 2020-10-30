@@ -41,11 +41,12 @@ MAPQUESTKEY=[SECRET_VALUE]
 # API Endpoints
 
 ```
-app.get('/users', db.getUsers) 
-=> Returns all users, sorted by student id (ascending)
 
-app.get('/users/:studentid', db.getUserById)
-=> Returns user with a given student id
+app.get('/users', db.getUsers)
+=> Returns all users
+
+app.get('/users/:username', db.getUserByUsername)
+=> Returns user with a given username
 
 app.post('/users', db.createUser)
 => Create a new user with following query params:
@@ -56,34 +57,35 @@ app.post('/users', db.createUser)
         email: String,
         studentid: Integer
 
-app.delete('/users/:studentid', db.deleteUser)
-=> Deletes user with given student id
+app.delete('/users/:username', db.deleteUserByUsername)
+=> Deletes user with given username
 
 app.get('/coords', db.getCoords)
 => Returns all coord rows
 
-app.get('/coords/:studentid', db.getCoordsById)
-=> Returns all coord rows associated with a student id
+app.get('/coords/:username', db.getCoordsByUsername)
+=> Returns all coord rows associated with a username
 
 app.post('/coords', db.createCoords)
 => Create a new coord row with following query params:
         lat: float,
         long: float,
-        studentid: Integer
+        username: String
 => Calls MapQuest API to tag location street name
 
-app.get('/friends/', db.getFriendsByEmail);
-=> Returns all friends (confirmed and non-confirmed) with given email. Query params:
-    email: String
+app.get('/friends/', db.getFriendsByUsername)
+=> Returns all friends (confirmed and non-confirmed) with given username. Query params:
+    username: String
 
-app.post('/friendRequest', db.friendRequest);
+app.post('/friendRequest', db.friendRequest)
 => Creates friend request with following query params:
-    user_a_email: String,
-    user_b_email: String
+    username_a: String,
+    username_b: String
 
-app.post('/friendRequest/confirm', db.confirmRequest);
-=> Confirm friend request with following query params:
-    user_a_email: String,
-    user_b_email: String
+app.post('/friendRequest/confirm', db.confirmRequest)
+=> Confirms friend request with following query params:
+    username_a: String,
+    username_b: String
 
-```
+app.post('/resetDB', db.resetDB)
+=> Runs the seedQuery command to reset DB to initial state
