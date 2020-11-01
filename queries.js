@@ -35,6 +35,7 @@ const resetDB= (request, response) => {
 
 /*
  * User Table Queries
+ first_name,last_name,username,email 
  */
 
 const getUsers = (request, response) => {
@@ -42,7 +43,7 @@ const getUsers = (request, response) => {
     const { first_name, last_name} = request.query;
     const vals = [first_name, last_name];
     if (vals.includes(undefined)) {
-      client.query('SELECT first_name,last_name,username,email FROM users ORDER BY studentid ASC', (error, results) => {
+      client.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
         if (error) {
           response.status(400).send("Error retrieving users.");
           return;
@@ -105,13 +106,26 @@ const deleteUserByUsername = (request, response) => {
 //  * Coord Table Queries
 //  */
 const getCoords = (request, response) => {
-  client.query('SELECT * FROM coords', (error, results) => {
-    if (error) {
-      response.status(400).send("Error getting coordinates");
-      return;
-    }
-    response.status(200).json(results.rows)
-  })
+  const {  justLocation } = request.query;
+  console.log(justLocation);
+  if (justLocation == "true") {
+    client.query('SELECT lat,lng FROM coords', (error, results) => {
+      if (error) {
+        response.status(400).send("Error getting coordinates");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else {
+    client.query('SELECT * FROM coords', (error, results) => {
+      if (error) {
+        response.status(400).send("Error getting coordinates");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
 }
 
 
@@ -145,8 +159,9 @@ const createCoords = (request, response) => {
     var b = JSON.parse(response2['body']);
     var tag = b['results'][0]['locations'][0]['street'];
 
-    client.query('INSERT INTO coords (lat, long, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
+    client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
       if (error) {
+        console.log(error);
         response.status(400).send("Error inserting coordinates");
         return;
       }

@@ -15,9 +15,9 @@ const seedQuery =
 
     CREATE TABLE coords (
         lat float8          NOT NULL,
-        long float8         NOT NULL,
+        lng float8         NOT NULL,
         stamp TIMESTAMPTZ,
-        username varchar      NOT NULL REFERENCES users,
+        username varchar      NOT NULL,
         tag varchar
     );
 

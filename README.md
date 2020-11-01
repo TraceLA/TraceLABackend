@@ -61,7 +61,10 @@ app.delete('/users/:username', db.deleteUserByUsername)
 => Deletes user with given username
 
 app.get('/coords', db.getCoords)
-=> Returns all coord rows
+=> Returns all coord rows with time stamp, username, and location tag
+
+Optional query param:
+    justLocation: "true" ; => return just latitude/longitude
 
 app.get('/coords/:username', db.getCoordsByUsername)
 => Returns all coord rows associated with a username
