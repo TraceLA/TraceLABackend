@@ -175,14 +175,45 @@ const createCoords = (request, response) => {
 //  */
 
 const getFriendsByUsername = (request, response) => {
-  const {username} = request.query;
-  client.query('SELECT * FROM friends WHERE username_a = $1', [username], (error, results) => {
-    if (error) {
-      response.status(400).send("Error finding friends by username");
+  const {username, confirmed} = request.query;
+  if (username === undefined) {
+    response.status(400).send("Missing username");
+    return;
+  }
+  else if (confirmed === undefined) {
+    // show both confirmed & unconfirmed friends
+    client.query('SELECT * FROM friends WHERE username_a = $1', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error finding friends by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else if (confirmed == "true") {
+    // show only confirmed friends
+    client.query('SELECT * FROM friends WHERE username_a = $1 AND status=1', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error finding confirmed friends by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else if (confirmed == "false") {
+    // gets pending requests
+    client.query('SELECT * FROM friends WHERE username_a = $1 AND status=0', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error finding confirmed friends by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else {
+      response.status(400).send("Invalid parameter");
       return;
-    }
-    response.status(200).json(results.rows)
-  })
+  }
 }
 
 const friendRequest = (request, response) => {
@@ -192,15 +223,16 @@ const friendRequest = (request, response) => {
     response.status(400).send("Missing params");
     return;
   }
-
   client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error, results) => {
     if (error) {
+      console.log(error);
       response.status(400).send("Error making friend request");
       return;
     }
     response.status(200).send(`Friend request made`);
   })
 }
+
 
 const confirmRequest = (request, response) => {
   const { username_a, username_b } = request.query;
@@ -231,15 +263,4 @@ module.exports = {
   confirmRequest,
   resetDB,
 }
-
-// module.exports = {
-//   getUsers,
-//   getUserByUsername,
-//   createUser,
-//   deleteUserByUsername,
-//   resetDB,
-//   getFriendsByUsername,
-//   friendRequest,
-//   confirmRequest,
-// }
 

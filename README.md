@@ -69,6 +69,26 @@ Optional query param:
 app.get('/coords/:username', db.getCoordsByUsername)
 => Returns all coord rows associated with a username
 
+Example response for GET request to http://localhost:5000/coords/small:
+```
+[
+    {
+        "lat": 34.071191,
+        "lng": -118.445771,
+        "stamp": "2020-11-01T21:58:04.090Z",
+        "username": "small",
+        "tag": "Bruin Walk"
+    },
+    {
+        "lat": 34.071707,
+        "lng": -118.443959,
+        "stamp": "2020-11-01T21:58:51.377Z",
+        "username": "small",
+        "tag": "Student Activities Center"
+    }
+]
+```
+
 app.post('/coords', db.createCoords)
 => Create a new coord row with following query params:
         lat: float,
@@ -79,6 +99,7 @@ app.post('/coords', db.createCoords)
 app.get('/friends/', db.getFriendsByUsername)
 => Returns all friends (confirmed and non-confirmed) with given username. Query params:
     username: String
+    confirmed: "true"/"false" (optional) ; if "true", returns only confirmed friends. if "false," returns only pending requests.
 
 app.post('/friendRequest', db.friendRequest)
 => Creates friend request with following query params:

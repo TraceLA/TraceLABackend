@@ -22,10 +22,10 @@ const seedQuery =
     );
 
     CREATE TABLE friends (
-        friends_id serial PRIMARY KEY,
-        username_a varchar NOT NULL REFERENCES users,
-        username_b varchar NOT NULL REFERENCES users,
-        status integer NOT NULL default 0
+        username_a varchar NOT NULL,
+        username_b varchar NOT NULL,
+        status integer NOT NULL default 0,
+        PRIMARY KEY (username_a, username_b)
     );
 
     INSERT INTO users (first_name, last_name, username, password, email, studentid ) 
