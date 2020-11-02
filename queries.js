@@ -174,6 +174,8 @@ const createCoords = (request, response) => {
 //  * Friend Table Queries
 //  */
 
+
+
 const getFriendsByUsername = (request, response) => {
   const {username, confirmed} = request.query;
   if (username === undefined) {
@@ -216,6 +218,10 @@ const getFriendsByUsername = (request, response) => {
   }
 }
 
+
+// first checks if users are valid
+// then attempts to make a friend request 
+// returns status 400 if friend request exists between 2 usernames
 const friendRequest = (request, response) => {
   const { username_a, username_b } = request.query;
   const vals = [username_a, username_b, 0];
@@ -223,13 +229,33 @@ const friendRequest = (request, response) => {
     response.status(400).send("Missing params");
     return;
   }
-  client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error, results) => {
+  client.query('SELECT 1 FROM users WHERE username = $1', [username_a], (error, results) => {
     if (error) {
-      console.log(error);
-      response.status(400).send("Error making friend request");
+      response.status(400).send("Error finding user a");
       return;
     }
-    response.status(200).send(`Friend request made`);
+    else if (results.rows.length == 0) {
+      response.status(400).send("User a doesn't exist");
+      return;
+    }
+    client.query('SELECT 1 FROM users WHERE username = $1', [username_b], (error2, results2) => {
+      if (error2) {
+        response.status(400).send("Error finding user b");
+        return;
+      }
+      else if (results2.rows.length == 0) {
+        response.status(400).send("User b doesn't exist");
+        return;
+      }
+      client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error, results) => {
+        if (error) {
+          console.log(error);
+          response.status(400).send("Error making friend request");
+          return;
+        }
+        response.status(200).send(`Friend request made`);
+      })
+    })
   })
 }
 
