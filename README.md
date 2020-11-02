@@ -1,4 +1,12 @@
 # Getting Started
+
+> git clone https://github.com/TraceLA/TraceLABackend.git
+> cd TraceLABackend
+
+> touch .env
+
+Copy-paste all the secret keys from Discord
+
 Package.json keeps track of all your node modules. Type:
 > npm install
 
@@ -10,9 +18,12 @@ Type:
 
 To set up nodemon so you don't have to turn off and on the server for on the backend.
 
-# Environment Variables
 
-Collaborators have access to the environment variables under Settings/Secrets. 
+# Accessing the Database
+
+> psql -U username -h nameOfRemoteServer -p 5432 dbname
+
+# Environment Variables
 
 Simply
 > touch .env
@@ -30,49 +41,75 @@ MAPQUESTKEY=[SECRET_VALUE]
 # API Endpoints
 
 ```
-app.get('/users', db.getUsers) 
-=> Returns all users, sorted by student id (ascending)
 
-app.get('/users/:studentid', db.getUserById)
-=> Returns user with a given student id
+app.get('/users', db.getUsers)
+=> Returns all users
+
+app.get('/users/:username', db.getUserByUsername)
+=> Returns user with a given username
 
 app.post('/users', db.createUser)
 => Create a new user with following query params:
-        First_Name: String,
-        Last_Name: String,
-        Username: String,
-        Password: String,
-        Email: String,
-        StudentID: Integer
+        first_name: String,
+        last_name: String,
+        username: String,
+        password: String,
+        email: String,
+        studentid: Integer
 
-app.delete('/users/:studentid', db.deleteUser)
-=> Deletes user with given student id
+app.delete('/users/:username', db.deleteUserByUsername)
+=> Deletes user with given username
 
 app.get('/coords', db.getCoords)
-=> Returns all coord rows
+=> Returns all coord rows with time stamp, username, and location tag
 
-app.get('/coords/:studentid', db.getCoordsById)
-=> Returns all coord rows associated with a student id
+Optional query param:
+    justLocation: "true" ; => return just latitude/longitude
+
+app.get('/coords/:username', db.getCoordsByUsername)
+=> Returns all coord rows associated with a username
+
+Example response for GET request to http://localhost:5000/coords/small:
+```
+[
+    {
+        "lat": 34.071191,
+        "lng": -118.445771,
+        "stamp": "2020-11-01T21:58:04.090Z",
+        "username": "small",
+        "tag": "Bruin Walk"
+    },
+    {
+        "lat": 34.071707,
+        "lng": -118.443959,
+        "stamp": "2020-11-01T21:58:51.377Z",
+        "username": "small",
+        "tag": "Student Activities Center"
+    }
+]
+```
 
 app.post('/coords', db.createCoords)
 => Create a new coord row with following query params:
         lat: float,
         long: float,
-        studentid: Integer
+        username: String
 => Calls MapQuest API to tag location street name
 
-app.get('/friends/', db.getFriendsByEmail);
-=> Returns all friends (confirmed and non-confirmed) with given email. Query params:
-    email: String
+app.get('/friends/', db.getFriendsByUsername)
+=> Returns all friends (confirmed and non-confirmed) with given username. Query params:
+    username: String
+    confirmed: "true"/"false" (optional) ; if "true", returns only confirmed friends. if "false," returns only pending requests.
 
-app.post('/friendRequest', db.friendRequest);
+app.post('/friendRequest', db.friendRequest)
 => Creates friend request with following query params:
-    user_a_email: String,
-    user_b_email: String
+    username_a: String,
+    username_b: String
 
-app.post('/friendRequest/confirm', db.confirmRequest);
-=> Confirm friend request with following query params:
-    user_a_email: String,
-    user_b_email: String
+app.post('/friendRequest/confirm', db.confirmRequest)
+=> Confirms friend request with following query params:
+    username_a: String,
+    username_b: String
 
-```
+app.post('/resetDB', db.resetDB)
+=> Runs the seedQuery command to reset DB to initial state

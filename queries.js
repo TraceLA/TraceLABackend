@@ -16,26 +16,34 @@ const client = new Client({
 client.connect();
 
 
-client.query(sq.seedQuery, (err, res) => {
-  if (err) {
-      console.error(err);
-      return;
-  }
-  console.log('Initialized DB.');
-});
+/*
+ * Reset Table Queries
+ */
+
+const resetDB= (request, response) => {
+  client.query(sq.seedQuery, (err, res) => {
+    if (err) {
+        console.error(err);
+        response.status(400).send("Error reseting DB.");
+        return;
+    }
+    console.log('Initialized DB.');
+    response.status(200).send(`Re-initialized DB`);
+  });
+}
 
 
 /*
  * User Table Queries
+ first_name,last_name,username,email 
  */
 
 const getUsers = (request, response) => {
-
     // Get user by name
     const { first_name, last_name} = request.query;
     const vals = [first_name, last_name];
     if (vals.includes(undefined)) {
-      client.query('SELECT first_name,last_name,email FROM users ORDER BY studentid ASC', (error, results) => {
+      client.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
         if (error) {
           response.status(400).send("Error retrieving users.");
           return;
@@ -55,12 +63,11 @@ const getUsers = (request, response) => {
     })
 }
 
-const getUserById = (request, response) => {
-    const id = parseInt(request.params.studentid)
-    console.log(id);
-    client.query('SELECT first_name,last_name,email FROM users WHERE studentid = $1', [id], (error, results) => {
+const getUserByUsername = (request, response) => {
+    const username = request.params.username
+    client.query('SELECT first_name,last_name,email FROM users WHERE username = $1', [username], (error, results) => {
       if (error) {
-        response.status(400).send("Error selecting user by id");
+        response.status(400).send("Error selecting user by username");
         return;
       }
       response.status(200).json(results.rows)
@@ -84,38 +91,49 @@ const createUser = (request, response) => {
   })
 }
 
-const deleteUser = (request, response) => {
-  const id = parseInt(request.params.studentid)
-
-  client.query('DELETE FROM users WHERE studentid = $1', [id], (error, results) => {
+const deleteUserByUsername = (request, response) => {
+  const username = request.params.username
+  client.query('DELETE FROM users WHERE username = $1', [username], (error, results) => {
     if (error) {
       response.status(400).send("Error deleting user");
       return;
     }
-    response.status(200).send(`User deleted with ID: ${id}`)
+    response.status(200).send(`User deleted with username: ${username}`)
   })
 }
 
-/*
- * Coord Table Queries
- */
+// /*
+//  * Coord Table Queries
+//  */
 const getCoords = (request, response) => {
-  client.query('SELECT * FROM coords ORDER BY studentid ASC', (error, results) => {
-    if (error) {
-      response.status(400).send("Error getting coordinates");
-      return;
-    }
-    response.status(200).json(results.rows)
-  })
+  const {  justLocation } = request.query;
+  console.log(justLocation);
+  if (justLocation == "true") {
+    client.query('SELECT lat,lng FROM coords', (error, results) => {
+      if (error) {
+        response.status(400).send("Error getting coordinates");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else {
+    client.query('SELECT * FROM coords', (error, results) => {
+      if (error) {
+        response.status(400).send("Error getting coordinates");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
 }
 
 
-const getCoordsById = (request, response) => {
-  const id = parseInt(request.params.studentid)
-  console.log(id);
-  client.query('SELECT * FROM coords WHERE studentid = $1', [id], (error, results) => {
+const getCoordsByUsername = (request, response) => {
+  const username = request.params.username
+  client.query('SELECT * FROM coords WHERE username = $1', [username], (error, results) => {
     if (error) {
-      response.status(400).send("Error selecting coordinates by student id");
+      response.status(400).send("Error selecting coordinates by username");
       return;
     }
     response.status(200).json(results.rows)
@@ -123,9 +141,9 @@ const getCoordsById = (request, response) => {
 }
 
 const createCoords = (request, response) => {
-  const {  lat, long, studentid } = request.query;
+  const {  lat, long, username } = request.query;
   var stamp = new Date();
-  const vals = [lat, long, stamp, studentid];
+  const vals = [lat, long, stamp, username];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
@@ -133,62 +151,123 @@ const createCoords = (request, response) => {
 
   var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
   requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err, response2, body) {
-    if(err) { console.log(err); return; }
+    if(err) { 
+      console.log(err); 
+      response.status(400).send("Error in reverse coordinate lookup");
+      return; 
+    }
     var b = JSON.parse(response2['body']);
     var tag = b['results'][0]['locations'][0]['street'];
 
-    client.query('INSERT INTO coords (lat, long, stamp, studentid,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, studentid,tag], (error, results) => {
+    client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
       if (error) {
+        console.log(error);
         response.status(400).send("Error inserting coordinates");
         return;
       }
       response.status(201).send(`Coord added`)
     });
   });
-
-  
 }
 
-/*
- * Friend Table Queries
- */
+// /*
+//  * Friend Table Queries
+//  */
 
-const getFriendsByEmail = (request, response) => {
-  const {email} = request.query;
-  client.query('SELECT * FROM friends WHERE user_a_email = $1', [email], (error, results) => {
-    if (error) {
-      response.status(400).send("Error finding friends by email");
+
+
+const getFriendsByUsername = (request, response) => {
+  const {username, confirmed} = request.query;
+  if (username === undefined) {
+    response.status(400).send("Missing username");
+    return;
+  }
+  else if (confirmed === undefined) {
+    // show both confirmed & unconfirmed friends
+    client.query('SELECT * FROM friends WHERE username_a = $1', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error finding friends by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else if (confirmed == "true") {
+    // show only confirmed friends
+    client.query('SELECT * FROM friends WHERE username_a = $1 AND status=1', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error finding confirmed friends by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else if (confirmed == "false") {
+    // gets pending requests
+    client.query('SELECT * FROM friends WHERE username_a = $1 AND status=0', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error finding confirmed friends by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
+  else {
+      response.status(400).send("Invalid parameter");
       return;
-    }
-    response.status(200).json(results.rows)
-  })
+  }
 }
 
+
+// first checks if users are valid
+// then attempts to make a friend request 
+// returns status 400 if friend request exists between 2 usernames
 const friendRequest = (request, response) => {
-  const { user_a_email, user_b_email } = request.query;
-  const vals = [user_a_email, user_b_email, 0];
+  const { username_a, username_b } = request.query;
+  const vals = [username_a, username_b, 0];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
   }
-
-  client.query('INSERT INTO friends (user_a_email,user_b_email,status)  VALUES ($1, $2, $3)', vals, (error, results) => {
+  client.query('SELECT 1 FROM users WHERE username = $1', [username_a], (error, results) => {
     if (error) {
-      response.status(400).send("Error making friend request");
+      response.status(400).send("Error finding user a");
       return;
     }
-    response.status(200).send(`Friend request made`);
+    else if (results.rows.length == 0) {
+      response.status(400).send("User a doesn't exist");
+      return;
+    }
+    client.query('SELECT 1 FROM users WHERE username = $1', [username_b], (error2, results2) => {
+      if (error2) {
+        response.status(400).send("Error finding user b");
+        return;
+      }
+      else if (results2.rows.length == 0) {
+        response.status(400).send("User b doesn't exist");
+        return;
+      }
+      client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error, results) => {
+        if (error) {
+          console.log(error);
+          response.status(400).send("Error making friend request");
+          return;
+        }
+        response.status(200).send(`Friend request made`);
+      })
+    })
   })
 }
+
 
 const confirmRequest = (request, response) => {
-  const { user_a_email, user_b_email } = request.query;
-  const vals = [user_a_email, user_b_email];
+  const { username_a, username_b } = request.query;
+  const vals = [username_a, username_b];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
   }
-  client.query('UPDATE FRIENDS SET status = 1 WHERE user_a_email=$1 AND user_b_email=$2', vals, (error, results) => {
+  client.query('UPDATE FRIENDS SET status = 1 WHERE username_a=$1 AND username_b=$2', vals, (error, results) => {
     if (error) {
       response.status(400).send("Error confirming friend request");
       return;
@@ -199,13 +278,15 @@ const confirmRequest = (request, response) => {
 
 module.exports = {
   getUsers,
-  getUserById,
+  getUserByUsername,
   createUser,
-  deleteUser,
+  deleteUserByUsername,
   getCoords,
-  getCoordsById,
+  getCoordsByUsername,
   createCoords,
-  getFriendsByEmail,
+  getFriendsByUsername,
   friendRequest,
   confirmRequest,
+  resetDB,
 }
+
