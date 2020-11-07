@@ -1,6 +1,7 @@
 const {Client} = require('pg')
 const sq = require('./seedQuery')
 var requestLib = require('request');
+var crypto = require("crypto");
 require('dotenv').config()
 
 const client = new Client({
@@ -15,6 +16,8 @@ const client = new Client({
 });
 client.connect();
 
+var keyToUser = {};
+var userToKey = {};
 
 /*
  * Reset Table Queries
@@ -37,6 +40,7 @@ const resetDB= (request, response) => {
  * User Table Queries
  first_name,last_name,username,email 
  */
+
 
 const getUsers = (request, response) => {
     // Get user by name
@@ -73,15 +77,41 @@ const getUserByUsername = (request, response) => {
       response.status(200).json(results.rows)
     })
   }
-  
+
+const userLogin = (request, response) => {
+  const {username, password} = request.query;
+  client.query('SELECT 1 FROM users WHERE username = $1 AND password = $2', [username,password], (error, results) => {
+    if (error || results.rows.length < 1) {
+      response.status(400).send("Username or password is incorrect");
+      return;
+    }
+    var time = new Date();
+    if (username in userToKey) {
+      var currentKey = userToKey[username][0];
+      response.status(200).json({api_key:refreshToken(username,currentKey)})
+    }
+    else {
+      var user_key = crypto.randomBytes(20).toString('hex');
+      while (user_key in keyToUser) {
+        user_key = crypto.randomBytes(20).toString('hex');
+      }
+      keyToUser[user_key] = [username, time];
+      userToKey[username] = [user_key,time];
+      console.log(keyToUser)
+      console.log(userToKey)
+      response.status(200).json({api_key:user_key})
+    }    
+  })
+}
+
 const createUser = (request, response) => {
+  console.log(request.headers);
   const { first_name, last_name, username, password, email, studentid } = request.query;
   const vals = [first_name, last_name, username, password, email, studentid ];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
   }
-
   client.query('INSERT INTO users (first_name, last_name, username, password, email, studentid ) VALUES ($1, $2, $3, $4, $5, $6)', vals, (error, results) => {
     if (error) {
       response.status(400).send("Error adding user");
@@ -142,11 +172,19 @@ const getCoordsByUsername = (request, response) => {
 
 const createCoords = (request, response) => {
   const {  lat, long, username } = request.query;
-  var stamp = new Date();
-  const vals = [lat, long, stamp, username];
+  var api_key = request.headers['api-key'];
+  const vals = [lat, long, username, api_key];
+
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
+  }
+  else if (! (api_key in keyToUser)) {
+    response.status(401).send("Unauthorized.");
+    return;
+  }
+  else if (tokenExpired(api_key)) {
+    response.status(401).send("Token expired.");
   }
 
   var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
@@ -158,7 +196,7 @@ const createCoords = (request, response) => {
     }
     var b = JSON.parse(response2['body']);
     var tag = b['results'][0]['locations'][0]['street'];
-
+    var stamp = new Date();
     client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
       if (error) {
         console.log(error);
@@ -173,8 +211,6 @@ const createCoords = (request, response) => {
 // /*
 //  * Friend Table Queries
 //  */
-
-
 
 const getFriendsByUsername = (request, response) => {
   const {username, confirmed} = request.query;
@@ -276,10 +312,33 @@ const confirmRequest = (request, response) => {
   })
 }
 
+
+function refreshToken(username, api_key) {
+  var currentKey = userToKey[username][0];
+  var time = new Date();
+  keyToUser[currentKey] = [username, time];
+  userToKey[username] = [currentKey,time];
+  return currentKey;
+}
+
+function tokenExpired(api_key) {
+  var stamp = new Date();
+  var minutesDiff = Math.floor( (stamp - keyToUser[api_key][1]) / 60000);
+  var username = keyToUser[api_key][0];
+  if (minutesDiff > 30) {
+    delete userToKey[username]
+    delete keyToUser[api_key]
+    return true;
+  }
+  refreshToken(username, api_key);
+  return false;
+}
+
 module.exports = {
   getUsers,
   getUserByUsername,
   createUser,
+  userLogin,
   deleteUserByUsername,
   getCoords,
   getCoordsByUsername,

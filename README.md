@@ -41,6 +41,19 @@ MAPQUESTKEY=[SECRET_VALUE]
 # API Endpoints
 
 ```
+app.post('/userLogin', db.userLogin)
+=> Login with following query params:
+    username: String,
+    password: String
+
+Returns api key as such:
+{
+    "api_key": "your_api_key"
+}
+
+Place the following key-value pair in the authorization header:
+key: "api-key"
+value: your_api_key
 
 app.get('/users', db.getUsers)
 => Returns all users
@@ -70,7 +83,7 @@ app.get('/coords/:username', db.getCoordsByUsername)
 => Returns all coord rows associated with a username
 
 Example response for GET request to http://localhost:5000/coords/small:
-```
+
 [
     {
         "lat": 34.071191,
@@ -87,7 +100,7 @@ Example response for GET request to http://localhost:5000/coords/small:
         "tag": "Student Activities Center"
     }
 ]
-```
+
 
 app.post('/coords', db.createCoords)
 => Create a new coord row with following query params:
@@ -113,3 +126,5 @@ app.post('/friendRequest/confirm', db.confirmRequest)
 
 app.post('/resetDB', db.resetDB)
 => Runs the seedQuery command to reset DB to initial state
+```
+

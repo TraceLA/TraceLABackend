@@ -39,7 +39,7 @@ app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 });
 
-
+app.post('/userLogin', db.userLogin)
 app.get('/users', db.getUsers)
 app.get('/users/:username', db.getUserByUsername)
 app.post('/users', db.createUser)
