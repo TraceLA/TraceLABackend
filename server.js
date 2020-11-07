@@ -1,42 +1,49 @@
-const express = require('express');
+const express = require("express");
 const app = express();
 const port = 5000;
-const db = require('./queries')
-const bodyParser = require('body-parser')
-const dotenv = require('dotenv');
+
+const db = require("./queries");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const dotenv = require("dotenv");
 dotenv.config();
 
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
     extended: true,
   })
-)
+);
+app.use(cors());
 
 // Database stores confirmed infections
-// [LogIn, Date /*DD/MM/YYYY*/, Longitude, Latitude, 
+// [LogIn, Date /*DD/MM/YYYY*/, Longitude, Latitude,
 // [Place1, place 2, etc], [Person1, person2, person3]
 database = {
-            "contact1" : {"Username" : "Adam101",
-            "Date" : "10/12/2020",
-            "Longitude" : 0,
-            "Latitude" : 0,
-            "Locations" : ["Starbucks101"],
-            "Contacts": ["Bobbystriker1032", "ChickenChelsie"],}
-          };
+  contact1: {
+    Username: "Adam101",
+    Date: "10/12/2020",
+    Longitude: 0,
+    Latitude: 0,
+    Locations: ["Starbucks101"],
+    Contacts: ["Bobbystriker1032", "ChickenChelsie"],
+  },
+};
 
 // List of known locations for reference
 locations = [
-              "Starbucks101", "CookieJar13", "UCLA Dining Hall", "ASHE Student Medical Center"
-            ]
+  "Starbucks101",
+  "CookieJar13",
+  "UCLA Dining Hall",
+  "ASHE Student Medical Center",
+];
 
-
-app.get('/', (req, res) => {
-  res.send('Hello World!')
+app.get("/", (req, res) => {
+  res.send("Hello World!");
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`Example app listening at http://localhost:${port}`);
 });
 
 app.post('/userLogin', db.userLogin)
