@@ -70,9 +70,6 @@ app.post('/users', db.createUser)
         email: String,
         studentid: Integer
 
-app.delete('/users/:username', db.deleteUserByUsername)
-=> Deletes user with given username
-
 app.get('/coords', db.getCoords)
 => Returns all coord rows with time stamp, username, and location tag
 
@@ -116,8 +113,7 @@ app.get('/friends/', db.getFriendsByUsername)
 
 app.post('/friendRequest', db.friendRequest)
 => Creates friend request with following query params:
-    username_a: String,
-    username_b: String
+    friend_username: String
 
 app.post('/friendRequest/confirm', db.confirmRequest)
 => Confirms friend request with following query params:

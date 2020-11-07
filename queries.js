@@ -83,61 +83,40 @@ const userLogin = (request, response) => {
   client.query('SELECT 1 FROM users WHERE username = $1 AND password = $2', [username,password], (error, results) => {
     if (error || results.rows.length < 1) {
       response.status(400).send("Username or password is incorrect");
-      return;
     }
-    var time = new Date();
-    if (username in userToKey) {
+    else if (username in userToKey) {
       var currentKey = userToKey[username][0];
       response.status(200).json({api_key:refreshToken(username,currentKey)})
     }
     else {
-      var user_key = crypto.randomBytes(20).toString('hex');
-      while (user_key in keyToUser) {
-        user_key = crypto.randomBytes(20).toString('hex');
-      }
-      keyToUser[user_key] = [username, time];
-      userToKey[username] = [user_key,time];
-      console.log(keyToUser)
-      console.log(userToKey)
+      var user_key = createToken(username);
       response.status(200).json({api_key:user_key})
     }    
   })
 }
 
 const createUser = (request, response) => {
-  console.log(request.headers);
   const { first_name, last_name, username, password, email, studentid } = request.query;
   const vals = [first_name, last_name, username, password, email, studentid ];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
-    return;
   }
-  client.query('INSERT INTO users (first_name, last_name, username, password, email, studentid ) VALUES ($1, $2, $3, $4, $5, $6)', vals, (error, results) => {
-    if (error) {
-      response.status(400).send("Error adding user");
-      return;
-    }
-    response.status(200).send(`User added`);
-  })
-}
-
-const deleteUserByUsername = (request, response) => {
-  const username = request.params.username
-  client.query('DELETE FROM users WHERE username = $1', [username], (error, results) => {
-    if (error) {
-      response.status(400).send("Error deleting user");
-      return;
-    }
-    response.status(200).send(`User deleted with username: ${username}`)
-  })
+  else {
+    client.query('INSERT INTO users (first_name, last_name, username, password, email, studentid ) VALUES ($1, $2, $3, $4, $5, $6)', vals, (error, results) => {
+      if (error) {
+        response.status(400).send("Error adding user");
+        return;
+      }
+      response.status(200).send(`User added`);
+    })
+  }
 }
 
 // /*
 //  * Coord Table Queries
 //  */
 const getCoords = (request, response) => {
-  const {  justLocation } = request.query;
-  console.log(justLocation);
+  const {justLocation } = request.query;
   if (justLocation == "true") {
     client.query('SELECT lat,lng FROM coords', (error, results) => {
       if (error) {
@@ -171,41 +150,41 @@ const getCoordsByUsername = (request, response) => {
 }
 
 const createCoords = (request, response) => {
-  const {  lat, long, username } = request.query;
+  const {lat, long} = request.query;
   var api_key = request.headers['api-key'];
-  const vals = [lat, long, username, api_key];
+  const vals = [lat, long, api_key];
 
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
-    return;
   }
   else if (! (api_key in keyToUser)) {
     response.status(401).send("Unauthorized.");
-    return;
   }
   else if (tokenExpired(api_key)) {
     response.status(401).send("Token expired.");
   }
-
-  var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
-  requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err, response2, body) {
-    if(err) { 
-      console.log(err); 
-      response.status(400).send("Error in reverse coordinate lookup");
-      return; 
-    }
-    var b = JSON.parse(response2['body']);
-    var tag = b['results'][0]['locations'][0]['street'];
-    var stamp = new Date();
-    client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
-      if (error) {
-        console.log(error);
-        response.status(400).send("Error inserting coordinates");
-        return;
+  else {
+    var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
+    requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err, response2, body) {
+      if(err) { 
+        console.log(err); 
+        response.status(400).send("Error in reverse coordinate lookup");
+        return; 
       }
-      response.status(201).send(`Coord added`)
+      var b = JSON.parse(response2['body']);
+      var tag = b['results'][0]['locations'][0]['street'];
+      var stamp = new Date();
+      var username = keyToUser[api_key][0];
+      client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
+        if (error) {
+          console.log(error);
+          response.status(400).send("Error inserting coordinates");
+          return;
+        }
+        response.status(201).send(`Coord added`)
+      });
     });
-  });
+  }
 }
 
 // /*
@@ -216,7 +195,6 @@ const getFriendsByUsername = (request, response) => {
   const {username, confirmed} = request.query;
   if (username === undefined) {
     response.status(400).send("Missing username");
-    return;
   }
   else if (confirmed === undefined) {
     // show both confirmed & unconfirmed friends
@@ -254,45 +232,40 @@ const getFriendsByUsername = (request, response) => {
   }
 }
 
-
 // first checks if users are valid
 // then attempts to make a friend request 
 // returns status 400 if friend request exists between 2 usernames
 const friendRequest = (request, response) => {
-  const { username_a, username_b } = request.query;
-  const vals = [username_a, username_b, 0];
-  if (vals.includes(undefined)) {
+  const {friend_username} = request.query;
+  var api_key = request.headers['api-key'];
+  if (friend_username === undefined) {
     response.status(400).send("Missing params");
-    return;
   }
-  client.query('SELECT 1 FROM users WHERE username = $1', [username_a], (error, results) => {
-    if (error) {
-      response.status(400).send("Error finding user a");
-      return;
-    }
-    else if (results.rows.length == 0) {
-      response.status(400).send("User a doesn't exist");
-      return;
-    }
-    client.query('SELECT 1 FROM users WHERE username = $1', [username_b], (error2, results2) => {
-      if (error2) {
-        response.status(400).send("Error finding user b");
-        return;
+  else if (! (api_key in keyToUser)) {
+    response.status(401).send("Unauthorized.");
+  }
+  else if (tokenExpired(api_key)) {
+    response.status(401).send("Token expired.");
+  }
+  else {
+    var username = keyToUser[api_key][0]
+
+    client.query('SELECT 1 FROM users WHERE username = $1', [friend_username], (error, results) => {
+      if (error || results.rows.length == 0) {
+        response.status(400).send("Friend username doesn't exist");
       }
-      else if (results2.rows.length == 0) {
-        response.status(400).send("User b doesn't exist");
-        return;
+      else {
+        var vals = [username, friend_username, 0];
+        client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error2, results2) => {
+          if (error2) {
+            response.status(400).send("Error making friend request");
+          }
+          response.status(200).send(`Friend request made`);
+        })
       }
-      client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error, results) => {
-        if (error) {
-          console.log(error);
-          response.status(400).send("Error making friend request");
-          return;
-        }
-        response.status(200).send(`Friend request made`);
-      })
     })
-  })
+
+  }
 }
 
 
@@ -312,6 +285,22 @@ const confirmRequest = (request, response) => {
   })
 }
 
+
+
+// /*
+//  * User Authentication Helper Functions
+//  */
+
+function createToken(username) {
+  var time = new Date();
+  var user_key = crypto.randomBytes(20).toString('hex');
+  while (user_key in keyToUser) {
+    user_key = crypto.randomBytes(20).toString('hex');
+  }
+  keyToUser[user_key] = [username, time];
+  userToKey[username] = [user_key,time];
+  return user_key;
+}
 
 function refreshToken(username, api_key) {
   var currentKey = userToKey[username][0];
@@ -334,12 +323,12 @@ function tokenExpired(api_key) {
   return false;
 }
 
+
 module.exports = {
   getUsers,
   getUserByUsername,
   createUser,
   userLogin,
-  deleteUserByUsername,
   getCoords,
   getCoordsByUsername,
   createCoords,
