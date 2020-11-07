@@ -270,19 +270,29 @@ const friendRequest = (request, response) => {
 
 
 const confirmRequest = (request, response) => {
-  const { username_a, username_b } = request.query;
-  const vals = [username_a, username_b];
-  if (vals.includes(undefined)) {
+  const {friend_username} = request.query;
+  var api_key = request.headers['api-key'];
+  if (friend_username === undefined) {
     response.status(400).send("Missing params");
-    return;
   }
-  client.query('UPDATE FRIENDS SET status = 1 WHERE username_a=$1 AND username_b=$2', vals, (error, results) => {
-    if (error) {
-      response.status(400).send("Error confirming friend request");
-      return;
-    }
-    response.status(200).send(`Friend request confirmed`);
-  })
+  else if (! (api_key in keyToUser)) {
+    response.status(401).send("Unauthorized.");
+  }
+  else if (tokenExpired(api_key)) {
+    response.status(401).send("Token expired.");
+  }
+  else {
+    var username = keyToUser[api_key][0]
+    var vals = [friend_username, username];
+    client.query('UPDATE FRIENDS SET status = 1 WHERE username_a=$1 AND username_b=$2', vals, (error, results) => {
+      if (error) {
+        response.status(400).send("Error confirming friend request");
+      }
+      else {
+        response.status(200).send(`Friend request confirmed`);
+      }
+    })
+  }
 }
 
 

@@ -40,6 +40,14 @@ MAPQUESTKEY=[SECRET_VALUE]
 
 # API Endpoints
 
+Important Note!!!
+All the POST requests are requiring an access token. After the user logs in, a key will be returned from the server.
+Place the following key-value pair in the authorization header:
+```
+key: "api-key"
+value: your_api_key
+```
+
 ```
 app.post('/userLogin', db.userLogin)
 => Login with following query params:
@@ -50,10 +58,6 @@ Returns api key as such:
 {
     "api_key": "your_api_key"
 }
-
-Place the following key-value pair in the authorization header:
-key: "api-key"
-value: your_api_key
 
 app.get('/users', db.getUsers)
 => Returns all users
