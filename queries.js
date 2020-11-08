@@ -258,7 +258,7 @@ const friendRequest = (request, response) => {
 
 
 const confirmRequest = (request, response) => {
-  const {friend_username} = request.query;
+  const {friend_username, reject} = request.query;
   var api_key = request.headers['api-key'];
   if (friend_username === undefined) {
     response.status(400).send("Missing params");
@@ -271,8 +271,11 @@ const confirmRequest = (request, response) => {
   }
   else {
     var username = keyToUser[api_key][0]
-    var vals = [friend_username, username];
-    client.query('UPDATE FRIENDS SET status = 1 WHERE username_a=$1 AND username_b=$2', vals, (error, results) => {
+    var vals = [1, friend_username, username];
+    if (reject == "true") {
+      vals[0] = -1;
+    }
+    client.query('UPDATE FRIENDS SET status = $1 WHERE username_a=$2 AND username_b=$3', vals, (error, results) => {
       if (error) {
         response.status(400).send("Error confirming friend request");
       }
