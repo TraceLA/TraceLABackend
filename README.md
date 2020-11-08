@@ -1,7 +1,9 @@
 # Getting Started
 
 > git clone https://github.com/TraceLA/TraceLABackend.git
+
 > cd TraceLABackend
+
 > touch .env 
 
 Copy-paste the secret keys
@@ -15,7 +17,9 @@ MAPQUESTKEY=[SECRET_VALUE]
 ```
 
 > npm install # install a local copy of the node modules.
+
 > npm run dev # set up nodemon so you don't have to turn off and on the server for on the backend.
+
 > psql -U username -h nameOfRemoteServer -p 5432 dbname # access the database
 
 # API Endpoints
