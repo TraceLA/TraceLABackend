@@ -97,5 +97,33 @@ friend_username: String     [REQUIRED]
 reject: "true"              [OPTIONAL]
 ```
 
+**Test Results**
+```
+app.get('/results', db.getResults)
 
+username: String    [OPTIONAL]
+```
 
+```
+app.post('/results', db.createResult)
+
+username: String    [REQUIRED]
+result: Boolean     [REQUIRED]
+date: date          [REQUIRED]  
+```
+
+**Contact Tracing**
+```
+app.get('/contacts', db.getContacts)
+
+username: String    [OPTIONAL]
+```
+
+```
+app.post('/contacts', db.createContact)
+
+own_username: String    [REUQIRED]
+other_username: String  [REQUIRED]
+location: String        [REQUIRED]
+date: date              [REQUIRED]
+```

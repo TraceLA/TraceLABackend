@@ -31,3 +31,9 @@ app.post('/coords', db.createCoords)
 app.get('/friends/', db.getFriendsByUsername)
 app.post('/friendRequest', db.friendRequest)
 app.post('/friendRequest/confirm', db.confirmRequest)
+
+app.get('/results', db.getResults)
+app.post('/results', db.createResult)
+
+app.get('/contacts', db.getContacts)
+app.post('/contacts', db.createContact)

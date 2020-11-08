@@ -226,7 +226,7 @@ const getFriendsByUsername = (request, response) => {
 const getContacts = (request, response) => {
   // Get contacts by username
   const { username } = request.query;
-  const vals = [username];
+  const vals = [username,username];
   if (vals.includes(undefined)) {
     client.query('SELECT own_username, other_username, location, date FROM contacts ORDER BY contact_id DESC', (error, results) => {
       if (error) {
@@ -239,7 +239,7 @@ const getContacts = (request, response) => {
   };
   
   // Get all contacts of user
-  client.query('SELECT own_username, other_username, location, date FROM contacts WHERE username=$1 OR username=$2 ORDER BY date DESC', vals, (error, results) => {
+  client.query('SELECT own_username, other_username, location, date FROM contacts WHERE own_username=$1 OR other_username=$2 ORDER BY date DESC', vals, (error, results) => {
     if (error) {
       response.status(400).send("Error retrieving contacts.");
       return;
@@ -250,21 +250,25 @@ const getContacts = (request, response) => {
 
 // Create new contact
 const createContact = (request, response) => {
-  const { own_username, other_username, location, date } = request.query;
-  const vals = [own_username, other_username, location, date];
+  const {other_username, location, date } = request.query;
+  const vals = [other_username, location, date];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
     return;
   };
-  client.query('INSERT INTO contacts (own_username, other_username, location, date) VALUES ($1, $2, $3, $4)', vals, (error, results) => {
-    if (error) {
-      response.status(400).send("Error adding contact");
-      return;
-    };
-    response.status(200).send("Contact added");
-  });
+  var api_key = validateToken(request, response);
+  if (api_key) {
+    var own_username = keyToUser[api_key][0];
+    client.query('INSERT INTO contacts (own_username, other_username, location, date) VALUES ($1, $2, $3, $4)', [own_username].concat(vals), (error, results) => {
+      if (error) {
+        response.status(400).send("Error adding contact");
+        return;
+      };
+      response.status(200).send("Contact added");
+    });
+  }
+  
 };
-
 
 // /*
 //  * Test Result Table Queries
@@ -302,6 +306,7 @@ const createResult = (request, response) => {
     response.status(400).send("Missing params");
     return;
   };
+
   client.query('INSERT INTO test_results (username, result, date) VALUES ($1, $2, $3)', vals, (error, results) => {
     if (error) {
       response.status(400).send("Error adding test result");
