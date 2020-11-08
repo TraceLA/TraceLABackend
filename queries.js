@@ -1,9 +1,10 @@
-const {Client} = require('pg')
-const sq = require('./seedQuery')
+const {Client} = require('pg');
+const sq = require('./seedQuery');
+const cq = require('./contactQuery');
 var requestLib = require('request');
 var crypto = require("crypto");
 const { query } = require('express');
-require('dotenv').config()
+require('dotenv').config();
 
 const client = new Client({
   host:process.env.PGHOST,
@@ -218,6 +219,98 @@ const getFriendsByUsername = (request, response) => {
   }
 }
 
+// /*
+//  * Contact Table Queries
+//  */
+
+const getContacts = (request, response) => {
+  // Get contacts by username
+  const { username } = request.query;
+  const vals = [username];
+  if (vals.includes(undefined)) {
+    client.query('SELECT own_username, other_username, location, date FROM contacts ORDER BY contact_id DESC', (error, results) => {
+      if (error) {
+        response.status(400).send("Error retrieving contacts.");
+        return;
+      }
+      response.status(200).json(results.rows);
+    });
+    return;
+  };
+  
+  // Get all contacts of user
+  client.query('SELECT own_username, other_username, location, date FROM contacts WHERE username=$1 OR username=$2 ORDER BY date DESC', vals, (error, results) => {
+    if (error) {
+      response.status(400).send("Error retrieving contacts.");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
+// Create new contact
+const createContact = (request, response) => {
+  const { own_username, other_username, location, date } = request.query;
+  const vals = [own_username, other_username, location, date];
+  if (vals.includes(undefined)) {
+    response.status(400).send("Missing params");
+    return;
+  };
+  client.query('INSERT INTO contacts (own_username, other_username, location, date) VALUES ($1, $2, $3, $4)', vals, (error, results) => {
+    if (error) {
+      response.status(400).send("Error adding contact");
+      return;
+    };
+    response.status(200).send("Contact added");
+  });
+};
+
+
+// /*
+//  * Test Result Table Queries
+//  */
+const getResults = (request, response) => {
+  // Get test results by username
+  const { username } = request.query;
+  const vals = [username];
+  if (vals.includes(undefined)) {
+    client.query('SELECT username, result, date FROM test_results ORDER BY test_id DESC', (error, results) => {
+      if (error) {
+        response.status(400).send("Error retrieving test results.");
+        return;
+      }
+      response.status(200).json(results.rows);
+    });
+    return;
+  };
+  
+  // Get all test results of user
+  client.query('SELECT username, result, date FROM test_results WHERE username=$1 ORDER BY date DESC', vals, (error, results) => {
+    if (error) {
+      response.status(400).send("Error retrieving test results.");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
+// Create new test result
+const createResult = (request, response) => {
+  const { username, result, date } = request.query;
+  const vals = [username, result, date];
+  if (vals.includes(undefined)) {
+    response.status(400).send("Missing params");
+    return;
+  };
+  client.query('INSERT INTO test_results (username, result, date) VALUES ($1, $2, $3)', vals, (error, results) => {
+    if (error) {
+      response.status(400).send("Error adding test result");
+      return;
+    };
+    response.status(200).send("Test result added");
+  });
+};
+
 
 // /*
 //  * Friend Requests & Confirmation
@@ -346,6 +439,10 @@ module.exports = {
   getCoords,
   createCoords,
   getFriendsByUsername,
+  getContacts,
+  createContact,
+  getResults,
+  createResult,
   friendRequest,
   confirmRequest,
 }
