@@ -28,6 +28,7 @@ var userToKey = {};
 
 const userLogin = (request, response) => {
   const {username, password} = request.query;
+  console.log(request.query);
   client.query('SELECT 1 FROM users WHERE username = $1 AND password = $2', [username,password], (error, results) => {
     if (error || results.rows.length < 1) {
       response.status(400).send("Username or password is incorrect");
@@ -44,6 +45,7 @@ const userLogin = (request, response) => {
 }
 
 const createUser = (request, response) => {
+  console.log(request.query)
   const { first_name, last_name, username, password, email, studentid } = request.query;
   const vals = [first_name, last_name, username, password, email, studentid ];
   if (vals.includes(undefined)) {
