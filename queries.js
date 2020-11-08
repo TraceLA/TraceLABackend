@@ -69,7 +69,7 @@ const createUser = (request, response) => {
  */
 const getUsers = (request, response) => {
     const { username, first_name, last_name} = request.query;
-    if (username === undefined && first_name === undefined && last_name === undefined) {
+    if (username === undefined && (first_name === undefined || last_name === undefined)) {
       // Get all users
       client.query('SELECT first_name,last_name,email FROM users ORDER BY studentid ASC', (error, results) => {
         if (error) {
