@@ -3,8 +3,6 @@ const app = express();
 const db = require("./queries");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const dotenv = require("dotenv");
-dotenv.config();
 const port = 5000;
 
 app.use(bodyParser.json());
@@ -16,7 +14,7 @@ app.use(
 );
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`TraceLA listening at http://localhost:${port}`);
 });
 
 app.get("/", (req, res) => {
