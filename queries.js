@@ -17,13 +17,63 @@ const client = new Client({
 });
 client.connect();
 
-var keyToUser = {};
-var userToKey = {};
+const keyToUser = {}, userToKey = {};
 
+/*
+ * Reset Table Queries
+ */
+
+const resetDB = (request, response) => {
+  client.query(sq.seedQuery, (err, res) => {
+    if (err) {
+        console.error(err);
+        response.status(400).send("Error reseting DB.");
+        return;
+    }
+    console.log('Initialized DB.');
+    response.status(200).send(`Re-initialized DB`);
+  });
+}
 
 /*
  * User POST Requests
  */
+
+const getUsers = (request, response) => {
+    // Get user by name
+    const { first_name, last_name} = request.query;
+    const vals = [first_name, last_name];
+    if (vals.includes(undefined)) {
+      client.query('SELECT * FROM users ORDER BY studentid ASC', (error, results) => {
+        if (error) {
+          response.status(400).send("Error retrieving users.");
+          return;
+        }
+        response.status(200).json(results.rows)
+      })
+      return;
+    }
+    
+    // Get all users
+    client.query('SELECT first_name,last_name,email FROM users WHERE first_name=$1 AND last_name=$2', vals, (error, results) => {
+      if (error) {
+        response.status(400).send("Error adding user");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+}
+
+const getUserByUsername = (request, response) => {
+    const username = request.params.username
+    client.query('SELECT first_name,last_name,email FROM users WHERE username = $1', [username], (error, results) => {
+      if (error) {
+        response.status(400).send("Error selecting user by username");
+        return;
+      }
+      response.status(200).json(results.rows)
+    })
+  }
 
 const userLogin = (request, response) => {
   const {username, password} = request.query;
@@ -288,24 +338,9 @@ const confirmRequest = (request, response) => {
 //  * User Authentication Helper Functions
 //  */
 
-function validateToken(request, response) {
-  var api_key = request.headers['api-key'];
-  if (! (api_key in keyToUser)) {
-    response.status(401).send("Unauthorized.");
-    return null;
-  }
-  else if (tokenExpired(api_key)) {
-    response.status(401).send("Token expired.");
-    return null;
-  }
-  else {
-    return api_key
-  }
-}
-
-function createToken(username) {
-  var time = new Date();
-  var user_key = crypto.randomBytes(20).toString('hex');
+const createToken = (username) => {
+  const time = new Date();
+  let user_key = crypto.randomBytes(20).toString('hex');
   while (user_key in keyToUser) {
     user_key = crypto.randomBytes(20).toString('hex');
   }
@@ -314,18 +349,18 @@ function createToken(username) {
   return user_key;
 }
 
-function refreshToken(username, api_key) {
-  var currentKey = userToKey[username][0];
-  var time = new Date();
+const refreshToken = (username, api_key) => {
+  const currentKey = userToKey[username][0];
+  const time = new Date();
   keyToUser[currentKey] = [username, time];
   userToKey[username] = [currentKey,time];
   return currentKey;
 }
 
-function tokenExpired(api_key) {
-  var stamp = new Date();
-  var minutesDiff = Math.floor( (stamp - keyToUser[api_key][1]) / 60000);
-  var username = keyToUser[api_key][0];
+const tokenExpired = (api_key) => {
+  const stamp = new Date();
+  const minutesDiff = Math.floor( (stamp - keyToUser[api_key][1]) / 60000);
+  const username = keyToUser[api_key][0];
   if (minutesDiff > 30) {
     delete userToKey[username]
     delete keyToUser[api_key]
