@@ -1,10 +1,8 @@
 # Getting Started
 
 > git clone https://github.com/TraceLA/TraceLABackend.git
-
-> cd TraceLABackend
-
-> touch .env 
+cd TraceLABackend
+touch .env 
 
 Copy-paste the secret keys
 ```
@@ -17,21 +15,18 @@ MAPQUESTKEY=[SECRET_VALUE]
 ```
 
 > npm install # install a local copy of the node modules.
-
-> npm run dev # set up nodemon so you don't have to turn off and on the server for on the backend.
-
-> psql -U username -h nameOfRemoteServer -p 5432 dbname # access the database
+npm run dev # set up nodemon so you don't have to turn off and on the server for on the backend.
+psql -U username -h nameOfRemoteServer -p 5432 dbname # access the database
 
 # API Endpoints
 
-
-> NOTE: All the POST requests require an api-key returned after a user logs in. In the authorization header, make sure you have the following: 
+NOTE: All the **POST** requests require an api-key returned after a user logs in. In the authorization header, make sure you have the following: 
 ```
 key: api-key
 value: your_api_key
 ```
 
-User Login/Registration
+**User Login/Registration**
 ```
 app.post('/userLogin', db.userLogin)
 
@@ -62,7 +57,7 @@ email: String       [REQUIRED]
 studentid: Integer  [REQUIRED]
 ```
 
-Coordinates
+**Coordinates**
 ```
 app.get('/coords', db.getCoords)
 
@@ -77,7 +72,7 @@ lat: float  [REQUIRED]
 long: float [REQUIRED]
 ```
 
-Friends / Friend Requests
+**Friends / Friend Requests**
 ```
 app.get('/friends/', db.getFriendsByUsername)
 
