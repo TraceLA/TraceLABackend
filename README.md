@@ -94,6 +94,7 @@ friend_username: String     [REQUIRED]
 app.post('/friendRequest/confirm', db.confirmRequest)
 
 friend_username: String     [REQUIRED]
+reject: "true"              [OPTIONAL]
 ```
 
 
