@@ -3,7 +3,7 @@ const app = express();
 const db = require("./queries");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const port = 5000;
+
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -13,9 +13,6 @@ app.use(
   })
 );
 
-app.listen(port, () => {
-  console.log(`TraceLA listening at http://localhost:${port}`);
-});
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -37,3 +34,6 @@ app.post('/results', db.createResult)
 
 app.get('/contacts', db.getContacts)
 app.post('/contacts', db.createContact)
+
+
+module.exports = app

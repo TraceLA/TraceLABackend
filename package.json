@@ -11,10 +11,15 @@
     "pg": "^8.4.1",
     "request": "^2.88.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "jest": "^26.6.3",
+    "supertest": "^6.0.1"
+  },
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js"
+    "dev": "nodemon start.js",
+    "start": "node start.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "repository": {
     "type": "git",
