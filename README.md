@@ -122,7 +122,6 @@ username: String    [OPTIONAL]
 ```
 app.post('/contacts', db.createContact)
 
-own_username: String    [REUQIRED]
 other_username: String  [REQUIRED]
 location: String        [REQUIRED]
 date: date              [REQUIRED]
