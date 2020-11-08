@@ -25,15 +25,11 @@ app.get("/", (req, res) => {
 
 app.post('/userLogin', db.userLogin)
 app.get('/users', db.getUsers)
-app.get('/users/:username', db.getUserByUsername)
 app.post('/users', db.createUser)
 
 app.get('/coords', db.getCoords)
-app.get('/coords/:username', db.getCoordsByUsername)
 app.post('/coords', db.createCoords)
 
 app.get('/friends/', db.getFriendsByUsername)
 app.post('/friendRequest', db.friendRequest)
 app.post('/friendRequest/confirm', db.confirmRequest)
-
-app.post('/resetDB', db.resetDB)
