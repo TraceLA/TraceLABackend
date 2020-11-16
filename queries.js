@@ -54,7 +54,7 @@ const createUser = (request, response) => {
   else {
     client.query('INSERT INTO users (first_name, last_name, username, password, email, studentid ) VALUES ($1, $2, $3, $4, $5, $6)', vals, (error, results) => {
       if (error) {
-        response.status(400).send("Error adding user");
+        response.status(500).send("Error adding user");
         return;
       }
       response.status(200).send(`User added`);
@@ -73,7 +73,7 @@ const getUsers = (request, response) => {
       // Get all users
       client.query('SELECT username,first_name,last_name,email FROM users ORDER BY studentid ASC', (error, results) => {
         if (error) {
-          response.status(400).send("Error retrieving users.");
+          response.status(500).send("Error retrieving users.");
         } 
         else {
           response.status(200).json(results.rows)
@@ -84,7 +84,7 @@ const getUsers = (request, response) => {
       // Get user by username
       client.query('SELECT username,first_name,last_name,email FROM users WHERE username = $1', [username], (error, results) => {
         if (error) {
-          response.status(400).send("Error selecting user by username");
+          response.status(500).send("Error selecting user by username");
           return;
         }
         response.status(200).json(results.rows)
@@ -94,7 +94,7 @@ const getUsers = (request, response) => {
       // Get users by first and last name
       client.query('SELECT username,first_name,last_name,email FROM users WHERE first_name=$1 AND last_name=$2', [first_name, last_name], (error, results) => {
         if (error) {
-          response.status(400).send("Error selecting user");
+          response.status(500).send("Error selecting user");
         } 
         else {
           response.status(200).json(results.rows)
@@ -120,7 +120,7 @@ const getCoords = (request, response) => {
     queryString += " WHERE username = $1";
     client.query(queryString, [username], (error, results) => {
       if (error) {
-        response.status(400).send("Error selecting coordinates by username");
+        response.status(500).send("Error selecting coordinates by username");
       }
       else {
         response.status(200).json(results.rows)
@@ -130,7 +130,7 @@ const getCoords = (request, response) => {
   else {
     client.query(queryString, (error, results) => {
       if (error) {
-        response.status(400).send("Error selecting all coordinates");
+        response.status(500).send("Error selecting all coordinates");
       }
       else {
         response.status(200).json(results.rows)
@@ -156,7 +156,7 @@ const createCoords = (request, response) => {
       requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err, response2, body) {
         if(err) { 
           console.log(err); 
-          response.status(400).send("Error in reverse coordinate lookup");
+          response.status(500).send("Error in reverse coordinate lookup");
         }
         else {
           var tag = JSON.parse(response2['body'])['results'][0]['locations'][0]['street'];
@@ -165,13 +165,16 @@ const createCoords = (request, response) => {
           client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
             if (error) {
               console.log(error);
-              response.status(400).send("Error inserting coordinates");
+              response.status(500).send("Error inserting coordinates");
               return;
             }
             response.status(201).send(`Coord added`)
           });
         }
       });
+    }
+    else {
+      response.status(401).send('No valid API key provided')
     }
   }
 }
@@ -189,7 +192,7 @@ const getFriendsByUsername = (request, response) => {
     // show both confirmed & unconfirmed friends
     client.query('SELECT * FROM friends WHERE username_a = $1', [username], (error, results) => {
       if (error) {
-        response.status(400).send("Error finding friends by username");
+        response.status(500).send("Error finding friends by username");
         return;
       }
       response.status(200).json(results.rows)
@@ -199,7 +202,7 @@ const getFriendsByUsername = (request, response) => {
     // show only confirmed friends
     client.query('SELECT * FROM friends WHERE username_a = $1 AND status=1', [username], (error, results) => {
       if (error) {
-        response.status(400).send("Error finding confirmed friends by username");
+        response.status(500).send("Error finding confirmed friends by username");
         return;
       }
       response.status(200).json(results.rows)
@@ -209,7 +212,7 @@ const getFriendsByUsername = (request, response) => {
     // gets pending requests
     client.query('SELECT * FROM friends WHERE username_a = $1 AND status=0', [username], (error, results) => {
       if (error) {
-        response.status(400).send("Error finding confirmed friends by username");
+        response.status(500).send("Error finding confirmed friends by username");
         return;
       }
       response.status(200).json(results.rows)
@@ -232,7 +235,7 @@ const getContacts = (request, response) => {
   if (vals.includes(undefined)) {
     client.query('SELECT own_username, other_username, location, date FROM contacts ORDER BY contact_id DESC', (error, results) => {
       if (error) {
-        response.status(400).send("Error retrieving contacts.");
+        response.status(500).send("Error retrieving contacts.");
         return;
       }
       response.status(200).json(results.rows);
@@ -243,7 +246,7 @@ const getContacts = (request, response) => {
   // Get all contacts of user
   client.query('SELECT own_username, other_username, location, date FROM contacts WHERE own_username=$1 OR other_username=$2 ORDER BY date DESC', vals, (error, results) => {
     if (error) {
-      response.status(400).send("Error retrieving contacts.");
+      response.status(500).send("Error retrieving contacts.");
       return;
     };
     response.status(200).json(results.rows);
@@ -263,13 +266,16 @@ const createContact = (request, response) => {
     var own_username = keyToUser[api_key][0];
     client.query('INSERT INTO contacts (own_username, other_username, location, date) VALUES ($1, $2, $3, $4)', [own_username].concat(vals), (error, results) => {
       if (error) {
-        response.status(400).send("Error adding contact");
+        response.status(500).send("Error adding contact");
         return;
       };
       response.status(200).send("Contact added");
     });
   }
-  
+  else {
+    response.status(401).send('No valid API key provided')
+  }
+
 };
 
 // /*
@@ -282,7 +288,7 @@ const getResults = (request, response) => {
   if (vals.includes(undefined)) {
     client.query('SELECT username, result, date FROM test_results ORDER BY test_id DESC', (error, results) => {
       if (error) {
-        response.status(400).send("Error retrieving test results.");
+        response.status(500).send("Error retrieving test results.");
         return;
       }
       response.status(200).json(results.rows);
@@ -293,7 +299,7 @@ const getResults = (request, response) => {
   // Get all test results of user
   client.query('SELECT username, result, date FROM test_results WHERE username=$1 ORDER BY date DESC', vals, (error, results) => {
     if (error) {
-      response.status(400).send("Error retrieving test results.");
+      response.status(500).send("Error retrieving test results.");
       return;
     };
     response.status(200).json(results.rows);
@@ -311,7 +317,7 @@ const createResult = (request, response) => {
 
   client.query('INSERT INTO test_results (username, result, date) VALUES ($1, $2, $3)', vals, (error, results) => {
     if (error) {
-      response.status(400).send("Error adding test result");
+      response.status(500).send("Error adding test result");
       return;
     };
     response.status(200).send("Test result added");
@@ -345,14 +351,16 @@ const friendRequest = (request, response) => {
           var vals = [username, friend_username, 0];
           client.query('INSERT INTO friends (username_a, username_b, status)  VALUES ($1, $2, $3)', vals, (error2, results2) => {
             if (error2) {
-              response.status(400).send("Error making friend request");
+              response.status(500).send("Error making friend request");
             }
             response.status(200).send(`Friend request made`);
           })
         }
       })
     }
-
+    else {
+      response.status(401).send('No valid API key provided')
+    }
   }
 }
 
@@ -364,7 +372,7 @@ const confirmRequest = (request, response) => {
     response.status(400).send("Missing params");
   }
   else if (! (api_key in keyToUser)) {
-    response.status(401).send("Unauthorized.");
+    response.status(401).send("No valid API key provided");
   }
   else if (tokenExpired(api_key)) {
     response.status(401).send("Token expired.");
@@ -377,7 +385,7 @@ const confirmRequest = (request, response) => {
     }
     client.query('UPDATE FRIENDS SET status = $1 WHERE username_a=$2 AND username_b=$3', vals, (error, results) => {
       if (error) {
-        response.status(400).send("Error confirming friend request");
+        response.status(500).send("Error confirming friend request");
       }
       else {
         response.status(200).send(`Friend request confirmed`);
