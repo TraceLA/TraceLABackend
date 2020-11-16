@@ -71,7 +71,7 @@ const getUsers = (request, response) => {
     const { username, first_name, last_name} = request.query;
     if (username === undefined && (first_name === undefined || last_name === undefined)) {
       // Get all users
-      client.query('SELECT first_name,last_name,email FROM users ORDER BY studentid ASC', (error, results) => {
+      client.query('SELECT username,first_name,last_name,email FROM users ORDER BY studentid ASC', (error, results) => {
         if (error) {
           response.status(400).send("Error retrieving users.");
         } 
@@ -82,7 +82,7 @@ const getUsers = (request, response) => {
     }
     else if (username != undefined) {
       // Get user by username
-      client.query('SELECT first_name,last_name,email FROM users WHERE username = $1', [username], (error, results) => {
+      client.query('SELECT username,first_name,last_name,email FROM users WHERE username = $1', [username], (error, results) => {
         if (error) {
           response.status(400).send("Error selecting user by username");
           return;
@@ -92,7 +92,7 @@ const getUsers = (request, response) => {
     }
     else {
       // Get users by first and last name
-      client.query('SELECT first_name,last_name,email FROM users WHERE first_name=$1 AND last_name=$2', [first_name, last_name], (error, results) => {
+      client.query('SELECT username,first_name,last_name,email FROM users WHERE first_name=$1 AND last_name=$2', [first_name, last_name], (error, results) => {
         if (error) {
           response.status(400).send("Error selecting user");
         } 
