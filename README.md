@@ -2,11 +2,7 @@
 
 > git clone https://github.com/TraceLA/TraceLABackend.git
 
-> cd TraceLABackend
-
-> touch .env 
-
-Copy-paste the secret keys
+Create a `.env` file with the following keys:
 ```
 PGHOST=[SECRET_VALUE]
 PGDATABASE=[SECRET_VALUE]
@@ -17,112 +13,182 @@ MAPQUESTKEY=[SECRET_VALUE]
 ```
 
 > npm install # install a local copy of the node modules.
-
 > npm run dev # set up nodemon so you don't have to turn off and on the server for on the backend.
+> psql -U username -h nameOfRemoteServer -p 5432 dbname  # access remote database
 
-> psql -U username -h nameOfRemoteServer -p 5432 dbname # access the database
+# Authentication
 
-# API Endpoints
-
-NOTE: All the **POST** requests require an api-key returned after a user logs in. In the authorization header, make sure you have the following: 
+All POST requests require an api-key in the authorizaiton header:
 ```
 key: api-key
 value: your_api_key
 ```
 
-**User Login/Registration**
+# HTTP Status Codes:
+* 200 - OK. Everything worked as expected.
+* 400 - Bad Request. The request was unacceptable, often due to missing a required parameter.
+* 401 - Unauthorized. No valid API key provided.
+* 402 - Request Failed. The parameters were valid but the request failed.
+* 403 - Forbidden. The API key doesn't have permissions to perform the request.
+* 404 - Not Found. The requested resource doesn't exist.
+* 429 - Too Many Request. Too many requests hit the API too quickly.
+* 500, 502, 503, 504 - Server Errors	
+
+(Source: https://stripe.com/docs/api/errors)
+
+
+# User
+
+## Endpoints
 ```
-app.post('/userLogin', db.userLogin)
+GET /users
+POST /userLogin
+POST /users
+```
 
-username: String    [REQUIRED]
-password: String    [REQUIRED]
+## Login a user
+```
+POST /userLogin
+```
+### Parameters
+* username: required
+* password: required
 
+Response:
+```
 {
     "api_key": "your_api_key"
 }
 ```
 
+## Add a user
 ```
-app.get('/users', db.getUsers)
-
-username: String    [OPTIONAL]
-first_name: String  [OPTIONAL]
-last_name: String   [OPTIONAL]  
+POST /users
 ```
+### Parameters
+* first_name: required
+* last_name: required
+* username: required
+* password: required
+* email: required
+* studentid: required
 
+## Retrieve users
 ```
-app.post('/users', db.createUser)
-
-first_name: String  [REQUIRED]
-last_name: String   [REQUIRED]
-username: String    [REQUIRED]
-password: String    [REQUIRED]
-email: String       [REQUIRED]
-studentid: Integer  [REQUIRED]
+GET /users
 ```
+Parameters:
+* first_name: optional
+* last_name: optional
+* username: optional
 
-**Coordinates**
+# Coordinates
+
+## Endpoints
 ```
-app.get('/coords', db.getCoords)
-
-username: String        [OPTIONAL]
-justLocation: "true"    [OPTIONAL]
-```
-
-```
-app.post('/coords', db.createCoords)
-
-lat: float  [REQUIRED]
-long: float [REQUIRED]
+GET /coords
+POST /coords
 ```
 
-**Friends / Friend Requests**
+## Retrieve coordinates
 ```
-app.get('/friends/', db.getFriendsByUsername)
-
-username: String            [REQUIRED],
-confirmed: "true", "false"  [OPTIONAL] 
+GET /coords
 ```
+### Parameters
+* username: optional
+* justLocation: optional
+  * If set to "true", does not return usernames
 
+## Add coordinate
 ```
-app.post('/friendRequest', db.friendRequest)
-
-friend_username: String     [REQUIRED]
+POST /coords
 ```
+### Parameters
+* lat: required
+* long: required
 
+
+# Friends
+## Endpoints
 ```
-app.post('/friendRequest/confirm', db.confirmRequest)
-
-friend_username: String     [REQUIRED]
-reject: "true"              [OPTIONAL]
-```
-
-**Test Results**
-```
-app.get('/results', db.getResults)
-
-username: String    [OPTIONAL]
+GET /friends/
+POST /friendRequest
+POST /friendRequest/confirm
 ```
 
+## Retrieve friends
 ```
-app.post('/results', db.createResult)
+GET /friends/
+```
+### Parameters
+* username: required
+* confirmed: optional
+  * If "true," returns only confirmed friend requests.
+  * If "false," returns only unconfirmed friend requests.
+  * If not set, returns both confirmed and unconfirmed friend requests
 
-username: String    [REQUIRED]
-result: Boolean     [REQUIRED]
-date: date          [REQUIRED]  
+## Make friend request
+```
+POST /friendRequest
+```
+### Parameters
+* friend_username: required
+
+## Confirm friend request
+```
+POST /friendRequest/confirm
+```
+### Parameters
+* friend_username: required
+* reject: optional
+  * If set to "true," rejects the friend request
+
+# Test Results 
+
+## Endpoints
+```
+GET /results
+POST /results
 ```
 
-**Contact Tracing**
+## Retrieve results
 ```
-app.get('/contacts', db.getContacts)
+GET /results
+```
+### Parameters
+* username: required
 
-username: String    [OPTIONAL]
+## Add results
+```
+POST /results
+```
+### Parameters
+* username: required
+* result: required
+  * "true" or "false"
+* date: required
+
+# Contacts
+
+## Endpoints
+```
+GET /contacts
+POST /contacts
 ```
 
+## Retrieve contacts
 ```
-app.post('/contacts', db.createContact)
+GET /contacts
+```
+### Parameters
+* username: optional
 
-other_username: String  [REQUIRED]
-location: String        [REQUIRED]
-date: date              [REQUIRED]
+
+## Add contact
 ```
+POST /contacts
+```
+### Parameters
+* other_username: required
+* location: required
+* date: required
