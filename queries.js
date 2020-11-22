@@ -184,13 +184,22 @@ const createCoords = (request, response) => {
 //  */
 
 const getFriendsByUsername = (request, response) => {
-  const {username, confirmed} = request.query;
+  const {username, confirmed,reverse} = request.query;
+  var which_username = "username_a"
+  if (reverse == "true") {
+    which_username = "username_b"
+  }
+  var regularQuery = 'SELECT * FROM friends WHERE ' + which_username + '= $1';
+  var confirmedQuery = regularQuery + 'AND status=1';
+  var unconfirmedQuery = regularQuery + 'AND status=0';
+  console.log(regularQuery)
   if (username === undefined) {
     response.status(400).send("Missing username");
   }
   else if (confirmed === undefined) {
     // show both confirmed & unconfirmed friends
-    client.query('SELECT * FROM friends WHERE username_a = $1', [username], (error, results) => {
+    
+    client.query(regularQuery, [username], (error, results) => {
       if (error) {
         response.status(500).send("Error finding friends by username");
         return;
@@ -200,7 +209,7 @@ const getFriendsByUsername = (request, response) => {
   }
   else if (confirmed == "true") {
     // show only confirmed friends
-    client.query('SELECT * FROM friends WHERE username_a = $1 AND status=1', [username], (error, results) => {
+    client.query(confirmedQuery, [username], (error, results) => {
       if (error) {
         response.status(500).send("Error finding confirmed friends by username");
         return;
@@ -210,7 +219,7 @@ const getFriendsByUsername = (request, response) => {
   }
   else if (confirmed == "false") {
     // gets pending requests
-    client.query('SELECT * FROM friends WHERE username_a = $1 AND status=0', [username], (error, results) => {
+    client.query(unconfirmedQuery, [username], (error, results) => {
       if (error) {
         response.status(500).send("Error finding confirmed friends by username");
         return;

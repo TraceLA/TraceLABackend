@@ -126,6 +126,8 @@ GET /friends/
   * If "true," returns only confirmed friend requests.
   * If "false," returns only unconfirmed friend requests.
   * If not set, returns both confirmed and unconfirmed friend requests
+* reverse: optional
+  * If "true," returns friend requests made to the given username
 
 ## Make friend request
 ```
