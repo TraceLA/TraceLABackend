@@ -10,6 +10,7 @@ const seedQuery =
         Username      varchar     NOT NULL      PRIMARY KEY,
         Password      varchar     NOT NULL,
         Email         varchar     NOT NULL      UNIQUE,
+        Sharing       integer     NOT NULL,
         StudentID     integer     NOT NULL      UNIQUE
     );
 
@@ -18,6 +19,7 @@ const seedQuery =
         lng float8         NOT NULL,
         stamp TIMESTAMPTZ,
         username varchar      NOT NULL,
+        sharing integer       NOT NULL,
         tag varchar
     );
 

@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
 app.post('/userLogin', db.userLogin)
 app.get('/users', db.getUsers)
 app.post('/users', db.createUser)
+app.post('/userPrivacy', db.updatePrivacy)
 
 app.get('/coords', db.getCoords)
 app.post('/coords', db.createCoords)

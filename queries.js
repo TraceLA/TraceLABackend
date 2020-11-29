@@ -47,12 +47,12 @@ const userLogin = (request, response) => {
 const createUser = (request, response) => {
   console.log(request.query)
   const { first_name, last_name, username, password, email, studentid } = request.query;
-  const vals = [first_name, last_name, username, password, email, studentid ];
+  const vals = [first_name, last_name, username, password, email, 1, studentid ];
   if (vals.includes(undefined)) {
     response.status(400).send("Missing params");
   }
   else {
-    client.query('INSERT INTO users (first_name, last_name, username, password, email, studentid ) VALUES ($1, $2, $3, $4, $5, $6)', vals, (error, results) => {
+    client.query('INSERT INTO users (first_name, last_name, username, password, email, sharing, studentid ) VALUES ($1, $2, $3, $4, $5, $6, $7)', vals, (error, results) => {
       if (error) {
         response.status(500).send("Error adding user");
         return;
@@ -63,6 +63,34 @@ const createUser = (request, response) => {
 }
 
 
+const updatePrivacy = (request, response) => {
+  const {allowSharing} = request.query;
+  const vals = [allowSharing];
+
+  if (vals.includes(undefined)) {
+    response.status(400).send("Missing params");
+  }
+  else if (allowSharing != 0 && allowSharing != 1) {
+    response.status(400).send("Invalid parameter value");
+  }
+  else {
+    var api_key = validateToken(request, response);
+    if (api_key) {
+      var username = keyToUser[api_key][0]
+      client.query('UPDATE users SET sharing = $1 WHERE username = $2', [allowSharing, username], (error, results) => {
+        if (error) {
+          response.status(400).send("Error updating privacy");
+        }
+        else {
+          response.status(200).send("Successfully updated privacy settings")
+        }
+      })
+    }
+    else {
+      response.status(401).send('No valid API key provided')
+    }
+  }
+}
 
 /*
  * User GET Requests
@@ -113,17 +141,30 @@ const getCoords = (request, response) => {
     queryString = 'SELECT lat,lng FROM coords';
   }
   else {
-    queryString = 'SELECT * FROM coords';
+    queryString = 'SELECT * FROM coords WHERE sharing=1';
   }
 
   if (username != undefined) {
-    queryString += " WHERE username = $1";
-    client.query(queryString, [username], (error, results) => {
+    client.query('SELECT sharing FROM users WHERE username=$1', [username], (error, results) => {
       if (error) {
-        response.status(500).send("Error selecting coordinates by username");
+        response.status(500).send("Error finding user share settings");
+      }
+      else if (results.rows.length != 1) {
+        response.status(402).send("No such user exists");
+      }
+      else if (results.rows[0]['sharing'] != 1) {
+        response.status(401).send("User does not allow location sharing.");
       }
       else {
-        response.status(200).json(results.rows)
+        queryString += " AND username = $1";
+        client.query(queryString, [username], (error2, results2) => {
+          if (error) {
+            response.status(500).send("Error selecting coordinates by username");
+          }
+          else {
+            response.status(200).json(results2.rows)
+          }
+        })
       }
     })
   }
@@ -151,27 +192,40 @@ const createCoords = (request, response) => {
   }
   else {
     var api_key = validateToken(request, response);
+    var username = keyToUser[api_key][0];
     if (api_key) {
-      var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
-      requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err, response2, body) {
-        if(err) { 
-          console.log(err); 
-          response.status(500).send("Error in reverse coordinate lookup");
+      client.query('SELECT sharing FROM users WHERE username=$1', [username], (err, results) => {
+        if (err) {
+          response.status(500).send("Error finding user share settings");
+        }
+        else if (results.rows.length != 1) {
+          response.status(402).send("No such user exists");
         }
         else {
-          var tag = JSON.parse(response2['body'])['results'][0]['locations'][0]['street'];
-          var stamp = new Date();
-          var username = keyToUser[api_key][0];
-          client.query('INSERT INTO coords (lat, lng, stamp, username,tag) VALUES ($1, $2, $3, $4, $5)', [lat, long, stamp, username,tag], (error, results) => {
-            if (error) {
-              console.log(error);
-              response.status(500).send("Error inserting coordinates");
-              return;
+          var allowSharing = results.rows[0]['sharing'];
+          var propertiesObject = { key:process.env.MAPQUESTKEY,location: String(lat) + "," + String(long) };
+          requestLib({url:'http://open.mapquestapi.com/geocoding/v1/reverse', qs:propertiesObject}, function(err2, response2, body) {
+            if(err2) { 
+              console.log(err2); 
+              response.status(500).send("Error in reverse coordinate lookup");
             }
-            response.status(201).send(`Coord added`)
+            else {
+              var tag = JSON.parse(response2['body'])['results'][0]['locations'][0]['street'];
+              var stamp = new Date();
+              
+              client.query('INSERT INTO coords (lat, lng, stamp, username,tag,sharing) VALUES ($1, $2, $3, $4, $5,$6)', [lat, long, stamp, username,tag,allowSharing], (err3, results) => {
+                if (err3) {
+                  console.log(err3);
+                  response.status(500).send("Error inserting coordinates");
+                  return;
+                }
+                response.status(201).send(`Coord added`)
+              });
+            }
           });
+
         }
-      });
+      })
     }
     else {
       response.status(401).send('No valid API key provided')
@@ -460,6 +514,7 @@ module.exports = {
   getUsers,
   createUser,
   userLogin,
+  updatePrivacy,
   getCoords,
   createCoords,
   getFriendsByUsername,
