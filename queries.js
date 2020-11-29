@@ -420,7 +420,9 @@ const friendRequest = (request, response) => {
             if (error2) {
               response.status(500).send("Error making friend request");
             }
-            response.status(200).send(`Friend request made`);
+            else {
+              response.status(200).send(`Friend request made`);
+            }
           })
         }
       })
