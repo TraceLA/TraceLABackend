@@ -406,6 +406,10 @@ const friendRequest = (request, response) => {
     var api_key = validateToken(request, response);
     if (api_key) {
       var username = keyToUser[api_key][0]
+      if (username == friend_username) {
+        response.status(400).send("Friend username cannot be own username");
+        return;
+      }
       client.query('SELECT 1 FROM users WHERE username = $1', [friend_username], (error, results) => {
         if (error || results.rows.length == 0) {
           response.status(400).send("Friend username doesn't exist");
