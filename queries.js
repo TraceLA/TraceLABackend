@@ -20,7 +20,7 @@ client.connect();
 
 var keyToUser = {};
 var userToKey = {};
-
+var superUsers = new Set();
 
 /*
  * User POST Requests
@@ -29,18 +29,24 @@ var userToKey = {};
 const userLogin = (request, response) => {
   const {username, password} = request.query;
   console.log(request.query);
-  client.query('SELECT 1 FROM users WHERE username = $1 AND password = $2', [username,password], (error, results) => {
+  client.query('SELECT * FROM users WHERE username = $1 AND password = $2', [username,password], (error, results) => {
     if (error || results.rows.length < 1) {
       response.status(400).send("Username or password is incorrect");
     }
-    else if (username in userToKey) {
-      var currentKey = userToKey[username][0];
-      response.status(200).json({api_key:refreshToken(username,currentKey)})
-    }
     else {
-      var user_key = createToken(username);
-      response.status(200).json({api_key:user_key})
-    }    
+      var access = results.rows[0]['access'];
+      if (access == 1) {
+        superUsers.add(username);
+      }
+      if (username in userToKey) {
+        var currentKey = userToKey[username][0];
+        response.status(200).json({api_key:refreshToken(username,currentKey)})
+      }
+      else {
+        var user_key = createToken(username);
+        response.status(200).json({api_key:user_key})
+      }    
+    }
   })
 }
 
@@ -61,7 +67,6 @@ const createUser = (request, response) => {
     })
   }
 }
-
 
 const updatePrivacy = (request, response) => {
   const {allowSharing} = request.query;
@@ -136,12 +141,31 @@ const getUsers = (request, response) => {
 //  */
 const getCoords = (request, response) => {
   const {username, justLocation } = request.query;
+  var isSuper = false;
   var queryString = "";
   if (justLocation == "true") {
-    queryString = 'SELECT lat,lng FROM coords';
+    queryString = 'SELECT lat,lng FROM coords WHERE sharing != -1';
+  }
+  else if (request.headers['api-key'] == undefined) {
+    queryString = 'SELECT * FROM coords WHERE sharing=1';
   }
   else {
-    queryString = 'SELECT * FROM coords WHERE sharing=1';
+    var api_key = validateToken(request, response);
+    if (api_key == undefined) {
+      return;
+    }
+    if (keyToUser[api_key] == undefined) {
+      queryString = 'SELECT * FROM coords WHERE sharing=1';
+    }
+    else {
+      isSuper = superUsers.has(keyToUser[api_key][0]);
+      if (isSuper) {
+        queryString = 'SELECT * FROM coords WHERE sharing != -1';
+      }
+      else {
+        queryString = 'SELECT * FROM coords WHERE sharing=1';
+      }
+    }    
   }
 
   if (username != undefined) {
@@ -152,13 +176,13 @@ const getCoords = (request, response) => {
       else if (results.rows.length != 1) {
         response.status(402).send("No such user exists");
       }
-      else if (results.rows[0]['sharing'] != 1) {
-        response.status(401).send("User does not allow location sharing.");
+      else if (results.rows[0]['sharing'] != 1 && !isSuper) {
+        response.status(401).send("User does not allow location sharing, and you don't have admin privilege.");
       }
       else {
         queryString += " AND username = $1";
         client.query(queryString, [username], (error2, results2) => {
-          if (error) {
+          if (error2) {
             response.status(500).send("Error selecting coordinates by username");
           }
           else {

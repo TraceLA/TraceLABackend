@@ -90,7 +90,7 @@ POST /userPrivacy
 Parameters:
 * allowSharing: required
   * If set to 1, location data is available for others to view
-  * If set to 0, location data is kept private
+  * If set to 0, location data is kept private, only available to users with admin privilege
 
 # Coordinates
 
