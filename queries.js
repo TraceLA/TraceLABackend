@@ -180,7 +180,7 @@ const getCoords = (request, response) => {
         response.status(401).send("User does not allow location sharing, and you don't have admin privilege.");
       }
       else {
-        queryString += " AND username = $1";
+        queryString += " AND username = $1 ORDER BY stamp";
         client.query(queryString, [username], (error2, results2) => {
           if (error2) {
             response.status(500).send("Error selecting coordinates by username");
@@ -193,6 +193,7 @@ const getCoords = (request, response) => {
     })
   }
   else {
+    queryString += " ORDER BY stamp";
     client.query(queryString, (error, results) => {
       if (error) {
         response.status(500).send("Error selecting all coordinates");
