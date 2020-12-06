@@ -412,6 +412,48 @@ const createResult = (request, response) => {
   });
 };
 
+
+
+// return contacts in last 14 days who tested positive
+const getPositiveContacts = (request, response) => {
+  const { username } = request.query;
+  if (username === undefined ) {
+    response.status(400).send("Missing username");
+    return;
+  }
+  var time = new Date(new Date().setDate(new Date().getDate() - 14));
+  var f = time.toUTCString();
+  client.query("SELECT DISTINCT username FROM test_results WHERE result='true' AND date >= $1", [f], (error, results) => {
+    if (error) {
+      console.log(error);
+      response.status(500).send("Error retrieving test results.");
+      return;
+    }
+    var positiveUsers = resultsToQueryStringSet(results, 'username');
+    client.query("SELECT DISTINCT other_username FROM contacts WHERE own_username = $1 AND date >= $2 AND other_username != $1 AND other_username in " + positiveUsers, [username,f], (error2, results2) => {
+      if (error2) {
+        console.log(error2);
+        response.status(500).send("Error retrieving positive contacts.");
+        return;
+      }
+      var positiveOne = resultsToSet(results2, 'other_username')
+      client.query("SELECT DISTINCT own_username FROM contacts WHERE other_username = $1 AND date >= $2 AND own_username != $1 AND own_username in " + positiveUsers, [username,f], (error3, results3) => {
+        if (error3) {
+          console.log(error3);
+          response.status(500).send("Error retrieving positive contacts.");
+          return;
+        }
+        var positiveTwo = resultsToSet(results3, 'own_username')
+        var finalPositiveContacts = new Set([...positiveOne, ...positiveTwo]);
+        console.log(finalPositiveContacts)
+        response.status(200).json(Array.from(finalPositiveContacts));
+      })
+      
+    })
+  })
+};
+
+
 // returns list of location tags visited by both the user and other COVID-positive users in the past 14 days 
 const getExposure = (request, response) => {
   const { username } = request.query;
@@ -428,15 +470,10 @@ const getExposure = (request, response) => {
       response.status(500).send("Error retrieving test results.");
       return;
     }
+    console.log(results.rows);
 
-    var potentialSpreaders = "(";
-    for (var i = 0; i < results.rows.length; i++) {
-      potentialSpreaders += "'" + results.rows[i]['username']+ "'"
-      if (i < results.rows.length - 1) {
-        potentialSpreaders += ","
-      }
-    }
-    potentialSpreaders += ")"
+    var potentialSpreaders = resultsToQueryStringSet(results, 'username');
+    console.log(potentialSpreaders)
 
     var coordQueryString = "SELECT DISTINCT tag FROM coords WHERE username in " + potentialSpreaders + " AND stamp >= $1 AND tag != '' "
     console.log(coordQueryString)
@@ -456,6 +493,7 @@ const getExposure = (request, response) => {
           }
           else {
             var userVisitedSpots = resultsToSet(results3,'tag')
+            console.log(userVisitedSpots)
             var intersectSpots = new Set([...potentialSpots].filter(i => userVisitedSpots.has(i)));
            
             response.status(200).json(Array.from(intersectSpots));
@@ -594,6 +632,26 @@ function tokenExpired(api_key) {
   return false;
 }
 
+function resultsToQueryStringSet(results, feature) {
+  var s = "(";
+  for (var i = 0; i < results.rows.length; i++) {
+    s += "'" + results.rows[i][feature]+ "'"
+    if (i < results.rows.length - 1) {
+      s += ","
+    }
+  }
+  s += ")"
+  return s
+}
+
+function resultsToArray(results, feature) {
+  var a = []
+  for (var i = 0; i < results.rows.length; i++) {
+    a.push(results.rows[i][feature])
+  }
+  return a
+}
+
 function resultsToSet(results, feature) {
   var s = new Set();
   for (var i = 0; i < results.rows.length; i++) {
@@ -617,5 +675,6 @@ module.exports = {
   friendRequest,
   confirmRequest,
   getExposure,
+  getPositiveContacts,
 }
 

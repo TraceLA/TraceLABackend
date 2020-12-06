@@ -209,12 +209,20 @@ POST /contacts
 # Exposure
 ## Endpoints
 ```
-GET /exposure/
+GET /exposure
+GET /exposure/contacts
 ```
 
 ## Retrieve potential infection spots
 ```
 GET /exposure/
+```
+### Parameters
+* username: required
+
+## Retrieve recent contacts who tested positive
+```
+GET /exposure/contacts
 ```
 ### Parameters
 * username: required
