@@ -204,3 +204,17 @@ POST /contacts
 * other_username: required
 * location: required
 * date: required
+
+
+# Exposure
+## Endpoints
+```
+GET /exposure/
+```
+
+## Retrieve potential infection spots
+```
+GET /exposure/
+```
+### Parameters
+* username: required

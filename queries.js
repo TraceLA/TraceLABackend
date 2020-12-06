@@ -412,6 +412,60 @@ const createResult = (request, response) => {
   });
 };
 
+// returns list of location tags visited by both the user and other COVID-positive users in the past 14 days 
+const getExposure = (request, response) => {
+  const { username } = request.query;
+  if (username === undefined ) {
+    response.status(400).send("Missing username");
+    return;
+  }
+
+  var time = new Date(new Date().setDate(new Date().getDate() - 14));
+  var f = time.toUTCString();
+  client.query("SELECT DISTINCT username FROM test_results WHERE result='true' AND date >= $1", [f], (error, results) => {
+    if (error) {
+      console.log(error);
+      response.status(500).send("Error retrieving test results.");
+      return;
+    }
+
+    var potentialSpreaders = "(";
+    for (var i = 0; i < results.rows.length; i++) {
+      potentialSpreaders += "'" + results.rows[i]['username']+ "'"
+      if (i < results.rows.length - 1) {
+        potentialSpreaders += ","
+      }
+    }
+    potentialSpreaders += ")"
+
+    var coordQueryString = "SELECT DISTINCT tag FROM coords WHERE username in " + potentialSpreaders + " AND stamp >= $1 AND tag != '' "
+    console.log(coordQueryString)
+    client.query(coordQueryString, [f], (error2, results2) => {
+      if (error2) {
+        console.log(error2)
+        response.status(500).send("Error finding location tags of infected users");
+      }
+      else {
+        var potentialSpots = resultsToSet(results2, 'tag')
+        console.log(potentialSpots)
+
+        client.query("SELECT DISTINCT tag FROM coords WHERE username=$1 AND stamp >= $2 AND tag != ''", [username, f], (error3, results3) => {
+          if (error3) {
+            console.log(error3);
+            response.status(500).send("Error finding location tags of inputted username");
+          }
+          else {
+            var userVisitedSpots = resultsToSet(results3,'tag')
+            var intersectSpots = new Set([...potentialSpots].filter(i => userVisitedSpots.has(i)));
+           
+            response.status(200).json(Array.from(intersectSpots));
+          }
+        })
+      }
+    })
+    
+  });
+};
 
 // /*
 //  * Friend Requests & Confirmation
@@ -540,6 +594,13 @@ function tokenExpired(api_key) {
   return false;
 }
 
+function resultsToSet(results, feature) {
+  var s = new Set();
+  for (var i = 0; i < results.rows.length; i++) {
+    s.add(results.rows[i][feature])
+  }
+  return s
+}
 
 module.exports = {
   getUsers,
@@ -555,5 +616,6 @@ module.exports = {
   createResult,
   friendRequest,
   confirmRequest,
+  getExposure,
 }
 
