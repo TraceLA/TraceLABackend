@@ -170,9 +170,9 @@ GET /results
 ### Parameters
 * username: optional
 * onlyPositive
- * If set to 1, only returns positive results
+  * If set to 1, only returns positive results
 * earliestDate
- * Only return results dated >= earliestDate (i.e. '2020-12-2')
+  * Only return results dated >= earliestDate (i.e. '2020-12-2')
 
 ## Add results
 ```
