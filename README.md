@@ -168,7 +168,11 @@ POST /results
 GET /results
 ```
 ### Parameters
-* username: required
+* username: optional
+* onlyPositive
+ * If set to 1, only returns positive results
+* earliestDate
+ * Only return results dated >= earliestDate (i.e. '2020-12-2')
 
 ## Add results
 ```
@@ -209,18 +213,18 @@ POST /contacts
 # Exposure
 ## Endpoints
 ```
-GET /exposure
+GET /exposure/spots
 GET /exposure/contacts
 ```
 
 ## Retrieve potential infection spots
 ```
-GET /exposure/
+GET /exposure/spots
 ```
 ### Parameters
 * username: required
 
-## Retrieve recent contacts who tested positive
+## Retrieve usernames of recent contacts who tested positive
 ```
 GET /exposure/contacts
 ```

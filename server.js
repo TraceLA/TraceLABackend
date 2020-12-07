@@ -36,7 +36,7 @@ app.post('/results', db.createResult)
 app.get('/contacts', db.getContacts)
 app.post('/contacts', db.createContact)
 
-app.get('/exposure', db.getExposure)
+app.get('/exposure/spots', db.getExposure)
 app.get('/exposure/contacts', db.getPositiveContacts)
 
 module.exports = app

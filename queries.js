@@ -4,6 +4,7 @@ const cq = require('./contactQuery');
 var requestLib = require('request');
 var crypto = require("crypto");
 const { query } = require('express');
+const { format } = require('path');
 require('dotenv').config();
 
 const client = new Client({
@@ -369,28 +370,37 @@ const createContact = (request, response) => {
 // /*
 //  * Test Result Table Queries
 //  */
+
+function getResultsConstraints(username=undefined, onlyPositive=false, earliestDate=undefined) {
+  let constraints = []
+  if (username != undefined) { 
+    constraints.push("username = " + "'" + username + "'")
+  }
+  if (onlyPositive == 1) {
+    constraints.push("result=true")
+  }
+  if (earliestDate != undefined) {
+    constraints.push("date >= " + "'"+ earliestDate + "'")
+  }
+  return constraints
+}
+
+async function getResultsQuery(username=undefined, onlyPositive=false, earliestDate=undefined) {
+  let constraints = getResultsConstraints(username,onlyPositive,earliestDate)
+  let queryConstraints = constraintsToQueryString(constraints)
+
+  let results = await client.query('SELECT username, result, date FROM test_results ' + queryConstraints + ' ORDER BY date DESC')
+  return results.rows
+}
+
 const getResults = (request, response) => {
   // Get test results by username
-  const { username } = request.query;
-  const vals = [username];
-  if (vals.includes(undefined)) {
-    client.query('SELECT username, result, date FROM test_results ORDER BY test_id DESC', (error, results) => {
-      if (error) {
-        response.status(500).send("Error retrieving test results.");
-        return;
-      }
-      response.status(200).json(results.rows);
-    });
-    return;
-  };
-  
-  // Get all test results of user
-  client.query('SELECT username, result, date FROM test_results WHERE username=$1 ORDER BY date DESC', vals, (error, results) => {
-    if (error) {
-      response.status(500).send("Error retrieving test results.");
-      return;
-    };
-    response.status(200).json(results.rows);
+  const { username, onlyPositive, earliestDate } = request.query;
+  getResultsQuery(username, onlyPositive, earliestDate).then(results => {
+    response.status(200).json(results)
+  }).catch(err => {
+    console.log(err);
+    response.status(500).send("Error retrieving test results.");
   });
 };
 
@@ -413,95 +423,93 @@ const createResult = (request, response) => {
 };
 
 
+// /*
+//  * Exposure/Risk Queries
+//  */
+
+async function combinePositiveContacts(positiveUsers, username, f) {
+  let positiveOne = await client.query("SELECT DISTINCT other_username FROM contacts WHERE own_username = $1 AND date >= $2 AND other_username != $1 AND other_username in " + positiveUsers, [username,f])
+  let positiveTwo = await client.query("SELECT DISTINCT own_username FROM contacts WHERE other_username = $1 AND date >= $2 AND own_username != $1 AND own_username in " + positiveUsers, [username,f])
+  
+  positiveOne = resultsToSet(positiveOne.rows,'other_username')
+  positiveTwo = resultsToSet(positiveTwo.rows,'own_username')
+  
+  var finalPositiveContacts = new Set([...positiveOne, ...positiveTwo]);
+  return finalPositiveContacts
+}
+
+async function distinctPositiveUsernames (formattedTime) {
+  let res = await client.query("SELECT DISTINCT username FROM test_results WHERE result='true' AND date >= $1", [formattedTime])
+  return res.rows
+}
 
 // return contacts in last 14 days who tested positive
-const getPositiveContacts = (request, response) => {
+const getExposureContacts = (request, response) => {
   const { username } = request.query;
   if (username === undefined ) {
     response.status(400).send("Missing username");
     return;
   }
-  var time = new Date(new Date().setDate(new Date().getDate() - 14));
-  var f = time.toUTCString();
-  client.query("SELECT DISTINCT username FROM test_results WHERE result='true' AND date >= $1", [f], (error, results) => {
-    if (error) {
-      console.log(error);
-      response.status(500).send("Error retrieving test results.");
-      return;
-    }
-    var positiveUsers = resultsToQueryStringSet(results, 'username');
-    client.query("SELECT DISTINCT other_username FROM contacts WHERE own_username = $1 AND date >= $2 AND other_username != $1 AND other_username in " + positiveUsers, [username,f], (error2, results2) => {
-      if (error2) {
-        console.log(error2);
+  var currentTime = new Date(new Date().setDate(new Date().getDate() - 14));
+  var formattedTime = currentTime.toUTCString();
+  distinctPositiveUsernames(formattedTime).then(distinctUsernames => {
+    var positiveUsers = resultsToQueryStringSet(distinctUsernames, 'username');
+    combinePositiveContacts(positiveUsers, username, formattedTime).then(contacts => {
+      console.log(contacts);  
+      response.status(200).json(Array.from(contacts))
+    }).catch(err => {
+        console.log(err);
         response.status(500).send("Error retrieving positive contacts.");
-        return;
-      }
-      var positiveOne = resultsToSet(results2, 'other_username')
-      client.query("SELECT DISTINCT own_username FROM contacts WHERE other_username = $1 AND date >= $2 AND own_username != $1 AND own_username in " + positiveUsers, [username,f], (error3, results3) => {
-        if (error3) {
-          console.log(error3);
-          response.status(500).send("Error retrieving positive contacts.");
-          return;
-        }
-        var positiveTwo = resultsToSet(results3, 'own_username')
-        var finalPositiveContacts = new Set([...positiveOne, ...positiveTwo]);
-        console.log(finalPositiveContacts)
-        response.status(200).json(Array.from(finalPositiveContacts));
-      })
-      
-    })
-  })
+    });    
+  }).catch(err => {
+    console.log(err);
+    response.status(500).send("Error retrieving usernames associated with positive tests.");
+  });
 };
 
 
+async function tagsOfPositiveUsers(potentialSpreaders, earliestDate) {
+  var qs = "SELECT DISTINCT tag FROM coords WHERE username in " + potentialSpreaders + " AND stamp >= $1 AND tag != '' "
+  let res = await client.query(qs, [earliestDate]);
+  return res.rows
+}
+
+async function tagsOfUser(username, earliestDate) {
+  let res = await client.query("SELECT DISTINCT tag FROM coords WHERE username=$1 AND stamp >= $2 AND tag != ''", [username, earliestDate])
+  return res.rows
+}
+
 // returns list of location tags visited by both the user and other COVID-positive users in the past 14 days 
-const getExposure = (request, response) => {
+const getExposureSpots = (request, response) => {
   const { username } = request.query;
   if (username === undefined ) {
     response.status(400).send("Missing username");
     return;
   }
 
-  var time = new Date(new Date().setDate(new Date().getDate() - 14));
-  var f = time.toUTCString();
-  client.query("SELECT DISTINCT username FROM test_results WHERE result='true' AND date >= $1", [f], (error, results) => {
-    if (error) {
-      console.log(error);
-      response.status(500).send("Error retrieving test results.");
-      return;
-    }
-    console.log(results.rows);
+  var currentTime = new Date(new Date().setDate(new Date().getDate() - 14));
+  var formattedTime = currentTime.toUTCString();
 
-    var potentialSpreaders = resultsToQueryStringSet(results, 'username');
-    console.log(potentialSpreaders)
-
-    var coordQueryString = "SELECT DISTINCT tag FROM coords WHERE username in " + potentialSpreaders + " AND stamp >= $1 AND tag != '' "
-    console.log(coordQueryString)
-    client.query(coordQueryString, [f], (error2, results2) => {
-      if (error2) {
-        console.log(error2)
-        response.status(500).send("Error finding location tags of infected users");
-      }
-      else {
-        var potentialSpots = resultsToSet(results2, 'tag')
-        console.log(potentialSpots)
-
-        client.query("SELECT DISTINCT tag FROM coords WHERE username=$1 AND stamp >= $2 AND tag != ''", [username, f], (error3, results3) => {
-          if (error3) {
-            console.log(error3);
-            response.status(500).send("Error finding location tags of inputted username");
-          }
-          else {
-            var userVisitedSpots = resultsToSet(results3,'tag')
-            console.log(userVisitedSpots)
-            var intersectSpots = new Set([...potentialSpots].filter(i => userVisitedSpots.has(i)));
-           
-            response.status(200).json(Array.from(intersectSpots));
-          }
-        })
-      }
-    })
-    
+  distinctPositiveUsernames(formattedTime).then(distinctUsernames => {
+    var positiveUsers = resultsToQueryStringSet(distinctUsernames, 'username');
+    tagsOfPositiveUsers(positiveUsers, formattedTime).then(potentialSpots => {
+      console.log(potentialSpots)
+      tagsOfUser(username, formattedTime).then(userVisitedSpots => {
+        potentialSpots = resultsToSet(potentialSpots, 'tag')
+        userVisitedSpots = resultsToSet(userVisitedSpots, 'tag')
+        let intersectSpots = new Set([...potentialSpots].filter(i => userVisitedSpots.has(i)));
+        response.status(200).json(Array.from(intersectSpots));
+      }).catch(err => {
+        console.log(err);
+        response.status(500).send("Error retrieving tags of username.");
+      });
+    }).catch(err => {
+      console.log(err);
+      response.status(500).send("Error retrieving tags of positive users.");
+    });
+  }).catch(err => {
+    console.log(err);
+    response.status(500).send("Error retrieving usernames associated with positive tests.");
   });
 };
 
@@ -632,11 +640,28 @@ function tokenExpired(api_key) {
   return false;
 }
 
+// /*
+//  * Generic Helpers
+//  */
+
+function constraintsToQueryString(constraints) {
+  let qs = ""
+  let i = 0
+  for (i = 0; i < constraints.length; i++) {
+    if (i == 0) {
+      qs += "WHERE " + constraints[i]
+    } else {
+      qs += " AND " + constraints[i]
+    }
+  }
+  return qs
+}
+
 function resultsToQueryStringSet(results, feature) {
   var s = "(";
-  for (var i = 0; i < results.rows.length; i++) {
-    s += "'" + results.rows[i][feature]+ "'"
-    if (i < results.rows.length - 1) {
+  for (var i = 0; i < results.length; i++) {
+    s += "'" + results[i][feature]+ "'"
+    if (i < results.length - 1) {
       s += ","
     }
   }
@@ -644,18 +669,10 @@ function resultsToQueryStringSet(results, feature) {
   return s
 }
 
-function resultsToArray(results, feature) {
-  var a = []
-  for (var i = 0; i < results.rows.length; i++) {
-    a.push(results.rows[i][feature])
-  }
-  return a
-}
-
 function resultsToSet(results, feature) {
   var s = new Set();
-  for (var i = 0; i < results.rows.length; i++) {
-    s.add(results.rows[i][feature])
+  for (var i = 0; i < results.length; i++) {
+    s.add(results[i][feature])
   }
   return s
 }
@@ -674,7 +691,7 @@ module.exports = {
   createResult,
   friendRequest,
   confirmRequest,
-  getExposure,
-  getPositiveContacts,
+  getExposure: getExposureSpots,
+  getPositiveContacts: getExposureContacts,
 }
 
