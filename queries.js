@@ -1,6 +1,6 @@
 const {Client} = require('pg');
-const sq = require('./seedQuery');
-const cq = require('./contactQuery');
+
+
 var requestLib = require('request');
 var crypto = require("crypto");
 const { query } = require('express');
@@ -218,8 +218,8 @@ const createCoords = (request, response) => {
   }
   else {
     var api_key = validateToken(request, response);
-    var username = keyToUser[api_key][0];
     if (api_key) {
+      var username = keyToUser[api_key][0];
       client.query('SELECT sharing FROM users WHERE username=$1', [username], (err, results) => {
         if (err) {
           response.status(500).send("Error finding user share settings");
@@ -272,7 +272,6 @@ const getFriendsByUsername = (request, response) => {
   var regularQuery = 'SELECT * FROM friends WHERE ' + which_username + '= $1';
   var confirmedQuery = regularQuery + 'AND status=1';
   var unconfirmedQuery = regularQuery + 'AND status=0';
-  console.log(regularQuery)
   if (username === undefined) {
     response.status(400).send("Missing username");
   }
