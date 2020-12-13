@@ -690,7 +690,7 @@ module.exports = {
   createResult,
   friendRequest,
   confirmRequest,
-  getExposure: getExposureSpots,
-  getPositiveContacts: getExposureContacts,
+  getExposureSpots,
+  getExposureContacts,
 }
 
