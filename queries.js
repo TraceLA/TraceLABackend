@@ -427,14 +427,25 @@ const createResult = (request, response) => {
 //  */
 
 async function combinePositiveContacts(positiveUsers, username, f) {
-  let positiveOne = await client.query("SELECT DISTINCT other_username FROM contacts WHERE own_username = $1 AND date >= $2 AND other_username != $1 AND other_username in " + positiveUsers, [username,f])
-  let positiveTwo = await client.query("SELECT DISTINCT own_username FROM contacts WHERE other_username = $1 AND date >= $2 AND own_username != $1 AND own_username in " + positiveUsers, [username,f])
-  
-  positiveOne = resultsToSet(positiveOne.rows,'other_username')
-  positiveTwo = resultsToSet(positiveTwo.rows,'own_username')
-  
-  var finalPositiveContacts = new Set([...positiveOne, ...positiveTwo]);
-  return finalPositiveContacts
+  let positiveOne = await client.query("SELECT DISTINCT ON (other_username) other_username, date FROM contacts WHERE own_username = $1 AND date >= $2 AND other_username != $1 AND other_username in " + positiveUsers + " ORDER BY other_username, date DESC", [username,f])
+  let positiveTwo = await client.query("SELECT DISTINCT ON (own_username) own_username, date FROM contacts WHERE other_username = $1 AND date >= $2 AND own_username != $1 AND own_username in " + positiveUsers + " ORDER BY own_username, date DESC", [username,f])
+
+  var userToDate = {}
+
+  function updateUserToDate(userToDate, rows, key) {
+    console.log(rows)
+    for (let i = 0; i < rows.length; i++) {
+      let curUser = rows[i][key]
+      if (! (curUser in userToDate) || rows[i]['date'] > userToDate[curUser]) {
+        userToDate[curUser] = rows[i]['date']
+      }
+    }
+  }
+
+  updateUserToDate(userToDate, positiveOne.rows, 'other_username')
+  updateUserToDate(userToDate, positiveTwo.rows, 'own_username')
+
+  return userToDate
 }
 
 async function distinctPositiveUsernames (formattedTime) {
@@ -455,7 +466,8 @@ const getExposureContacts = (request, response) => {
     var positiveUsers = resultsToQueryStringSet(distinctUsernames, 'username');
     combinePositiveContacts(positiveUsers, username, formattedTime).then(contacts => {
       console.log(contacts);  
-      response.status(200).json(Array.from(contacts))
+      response.status(200).json(contacts)
+      // response.status(200).json(Array.from(contacts))
     }).catch(err => {
         console.log(err);
         response.status(500).send("Error retrieving positive contacts.");
