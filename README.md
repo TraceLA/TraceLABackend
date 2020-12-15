@@ -12,9 +12,11 @@ PGPASSWORD=[SECRET_VALUE]
 MAPQUESTKEY=[SECRET_VALUE]
 ```
 
-> npm install # install a local copy of the node modules.
-> npm run dev # set up nodemon so you don't have to turn off and on the server for on the backend.
-> psql -U username -h nameOfRemoteServer -p 5432 dbname  # access remote database
+> npm install 
+
+> npm run dev 
+
+> psql -U username -h nameOfRemoteServer -p 5432 dbname  
 
 # Authentication
 
@@ -35,7 +37,6 @@ value: your_api_key
 * 500, 502, 503, 504 - Server Errors	
 
 (Source: https://stripe.com/docs/api/errors)
-
 
 # User
 
@@ -224,7 +225,7 @@ GET /exposure/spots
 ### Parameters
 * username: required
 
-## Retrieve usernames of recent contacts who tested positive
+## Retrieve usernames of recent contacts who tested positive, along with date of last contact
 ```
 GET /exposure/contacts
 ```
