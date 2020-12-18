@@ -414,7 +414,7 @@ const getResults = (request, response) => {
 };
 
 const aggregateResults = (request, response) => {  
-  client.query('SELECT date, COUNT(result) FROM test_results GROUP BY date ORDER BY date ASC;', (error, results) => {
+  client.query('SELECT date, COUNT(result) FROM test_results WHERE result=true GROUP BY date ORDER BY date ASC;', (error, results) => {
     if (error) {
       response.status(500).send("Error querying aggregate test results");
       return;

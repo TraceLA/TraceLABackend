@@ -176,7 +176,7 @@ GET /results
 * earliestDate
   * Only return results dated >= earliestDate (i.e. '2020-12-2')
 
-## Retrieve results count by date
+## Retrieve positive results count by date
 ```
 GET /aggregateResults
 ```
