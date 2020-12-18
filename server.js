@@ -24,6 +24,7 @@ app.post('/users', db.createUser)
 app.post('/userPrivacy', db.updatePrivacy)
 
 app.get('/coords', db.getCoords)
+app.get('/aggregateCoordsByDate', db.aggregateCoordsByDate)
 app.post('/coords', db.createCoords)
 
 app.get('/friends/', db.getFriendsByUsername)

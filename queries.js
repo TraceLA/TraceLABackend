@@ -206,6 +206,17 @@ const getCoords = (request, response) => {
   }
 }
 
+const aggregateCoordsByDate = (request, response) => {  
+  client.query("SELECT DATE_TRUNC('day',stamp), COUNT(DATE_TRUNC('day',stamp)) FROM coords GROUP BY DATE_TRUNC('day',stamp) ORDER BY DATE_TRUNC('day',stamp) asc;", (error, results) => {
+    if (error) {
+      response.status(500).send("Error aggregating coords by date");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
+
 // /*
 //  * Coord POST Requests
 //  */
@@ -760,5 +771,6 @@ module.exports = {
   aggregateContactsByDate,
   numContactsByUsername,
   numContactsDistribution,
+  aggregateCoordsByDate,
 }
 

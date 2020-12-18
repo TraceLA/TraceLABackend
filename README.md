@@ -98,6 +98,7 @@ Parameters:
 ## Endpoints
 ```
 GET /coords
+GET /aggregateCoordsByDate
 POST /coords
 ```
 
@@ -109,6 +110,13 @@ GET /coords
 * username: optional
 * justLocation: optional
   * If set to "true", does not return usernames
+
+## Aggregate coordinates count by date
+```
+GET /aggregateCoordsByDate
+```
+### Parameters
+* None
 
 ## Add coordinate
 ```
