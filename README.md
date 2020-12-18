@@ -198,7 +198,10 @@ POST /results
 ## Endpoints
 ```
 GET /contacts
-GET /aggregateCounts
+GET /aggregateContactsByDate
+GET /numContactsByUsername
+GET /numContactsDistribution
+
 POST /contacts
 ```
 
@@ -212,6 +215,20 @@ GET /contacts
 ## Retrieve contacts count by date
 ```
 GET /aggregateCounts
+```
+### Parameters
+* None
+
+## Retrieve contacts count by username
+```
+GET /numContactsByUsername
+```
+### Parameters
+* None
+
+## Retrieve contacts count distribution
+```
+GET /numContactsDistribution
 ```
 ### Parameters
 * None

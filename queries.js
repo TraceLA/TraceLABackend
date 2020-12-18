@@ -341,7 +341,7 @@ const getContacts = (request, response) => {
   });
 };
 
-const aggregateContacts = (request, response) => {  
+const aggregateContactsByDate = (request, response) => {  
   client.query('SELECT date, COUNT(date) from contacts GROUP BY date ORDER BY date ASC;', (error, results) => {
     if (error) {
       response.status(500).send("Error querying aggregate contacts");
@@ -350,6 +350,38 @@ const aggregateContacts = (request, response) => {
     response.status(200).json(results.rows);
   });
 };
+
+const numContactsByUsername = (request, response) => {  
+  const q =  'WITH tmp as (SELECT own_username, COUNT(own_username) FROM contacts GROUP BY own_username ' + 
+             'UNION SELECT other_username, COUNT(other_username) FROM contacts GROUP BY other_username) ' + 
+              'SELECT own_username, SUM(count) FROM tmp GROUP by own_username;'
+
+  client.query(q, (error, results) => {
+    if (error) {
+      response.status(500).send("Error querying number of contacts by user");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
+const numContactsDistribution = (request, response) => {  
+  const q =  'WITH tmp2 as (WITH tmp as (SELECT own_username, COUNT(own_username) FROM contacts GROUP BY own_username ' + 
+              'UNION SELECT other_username, COUNT(other_username) FROM contacts GROUP BY other_username) ' + 
+                'SELECT own_username, SUM(count) FROM tmp GROUP by own_username) ' + 
+                  'SELECT sum, COUNT(sum) FROM tmp2 GROUP BY sum ORDER BY sum;'
+
+  client.query(q, (error, results) => {
+    if (error) {
+      response.status(500).send("Error querying number of contacts distribution");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
+
+
 
 // Create new contact
 const createContact = (request, response) => {
@@ -725,6 +757,8 @@ module.exports = {
   getExposureSpots,
   getExposureContacts,
   aggregateResults,
-  aggregateContacts,
+  aggregateContactsByDate,
+  numContactsByUsername,
+  numContactsDistribution,
 }
 
