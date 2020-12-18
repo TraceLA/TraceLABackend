@@ -161,6 +161,7 @@ POST /friendRequest/confirm
 ## Endpoints
 ```
 GET /results
+GET /aggregateResults
 POST /results
 ```
 
@@ -174,6 +175,13 @@ GET /results
   * If set to 1, only returns positive results
 * earliestDate
   * Only return results dated >= earliestDate (i.e. '2020-12-2')
+
+## Retrieve results count by date
+```
+GET /aggregateResults
+```
+### Parameters
+* None
 
 ## Add results
 ```

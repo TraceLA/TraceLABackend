@@ -45,7 +45,7 @@ const userLogin = (request, response) => {
       }
       else {
         var user_key = createToken(username);
-        response.status(200).json({api_key:user_key})
+        response.status(200).json({api_key:user_key});
       }    
     }
   })
@@ -403,6 +403,16 @@ const getResults = (request, response) => {
   });
 };
 
+const aggregateResults = (request, response) => {  
+  client.query('SELECT date, COUNT(result) FROM test_results GROUP BY date ORDER BY date ASC;', (error, results) => {
+    if (error) {
+      response.status(500).send("Error querying aggregate test results");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
 // Create new test result
 const createResult = (request, response) => {
   const { username, result, date } = request.query;
@@ -704,5 +714,6 @@ module.exports = {
   confirmRequest,
   getExposureSpots,
   getExposureContacts,
+  aggregateResults,
 }
 

@@ -31,6 +31,7 @@ app.post('/friendRequest', db.friendRequest)
 app.post('/friendRequest/confirm', db.confirmRequest)
 
 app.get('/results', db.getResults)
+app.get('/aggregateResults', db.aggregateResults)
 app.post('/results', db.createResult)
 
 app.get('/contacts', db.getContacts)
