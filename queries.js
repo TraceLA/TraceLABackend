@@ -341,6 +341,16 @@ const getContacts = (request, response) => {
   });
 };
 
+const aggregateContacts = (request, response) => {  
+  client.query('SELECT date, COUNT(date) from contacts GROUP BY date ORDER BY date ASC;', (error, results) => {
+    if (error) {
+      response.status(500).send("Error querying aggregate contacts");
+      return;
+    };
+    response.status(200).json(results.rows);
+  });
+};
+
 // Create new contact
 const createContact = (request, response) => {
   const {other_username, location, date } = request.query;
@@ -715,5 +725,6 @@ module.exports = {
   getExposureSpots,
   getExposureContacts,
   aggregateResults,
+  aggregateContacts,
 }
 

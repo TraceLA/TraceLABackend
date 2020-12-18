@@ -35,6 +35,7 @@ app.get('/aggregateResults', db.aggregateResults)
 app.post('/results', db.createResult)
 
 app.get('/contacts', db.getContacts)
+app.get('/aggregateContacts', db.aggregateContacts)
 app.post('/contacts', db.createContact)
 
 app.get('/exposure/spots', db.getExposureSpots)
