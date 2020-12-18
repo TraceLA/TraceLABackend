@@ -198,6 +198,7 @@ POST /results
 ## Endpoints
 ```
 GET /contacts
+GET /aggregateCounts
 POST /contacts
 ```
 
@@ -208,6 +209,12 @@ GET /contacts
 ### Parameters
 * username: optional
 
+## Retrieve contacts count by date
+```
+GET /aggregateCounts
+```
+### Parameters
+* None
 
 ## Add contact
 ```
