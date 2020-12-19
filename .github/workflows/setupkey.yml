@@ -1,0 +1,15 @@
+name: SetupKey
+
+# Run this workflow every time a new commit pushed to your repository
+on: workflow_dispatch
+
+jobs:
+  # Set the job key. The key is displayed as the job name
+  # when a job name is not provided
+  super-setup:
+    # Name the Job
+    name: keySetup
+    steps:
+      - name: Hello world action
+        env: # Or as an environment variable
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
